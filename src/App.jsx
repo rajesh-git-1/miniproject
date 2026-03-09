@@ -274,6 +274,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import MasterLandingPage  from './pages/MasterLandingPage';
 import LoginPage          from './pages/LoginPage';
 import RegisterPage       from './pages/RegisterPage';
+import SetPassword from "./pages/SetPassword";
 
 // If you have these separate files, keep them imported:
 import StudentDashboard   from './pages/StudentDashboard';
@@ -355,7 +356,7 @@ function App() {
 
         {/* Catch-all */}
         <Route path="*" element={<Navigate to="/" replace />} />
-
+<Route path="/set-password" element={<SetPassword />} />
       </Routes>
     </Router>
   );

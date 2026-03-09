@@ -86,7 +86,7 @@ import studentRoutes from './routes/studentRoutes.js';
 import teacherRoutes from './routes/teacherRoutes.js';
 // Import your routes and models
 import apiRoutes from './routes/index.js'; 
-import { PendingRegistration, User } from './models/index.js';
+import { PendingRegistration, User, Student, Teacher, Class } from './models/index.js';
 import inventoryRoutes from './routes/inventoryRoutes.js'; // Note the .js at the end
 import registrationRoutes from './routes/registrationRoutes.js';
 dotenv.config();
@@ -137,20 +137,110 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-// ─── 2. REGISTRATION ROUTE ───
+// ─── 2. ADMIN USER CREATION ROUTE (Bypasses Pending — Creates permanently) ───
 app.post('/api/auth/register', async (req, res) => {
   try {
-    const newReg = await PendingRegistration.create({
-      ...req.body,
-      status: 'Pending' 
+    const { role, name, email, mobile, address, classId,
+            // Student fields
+            parentName, parentPhone, gender, dob, bloodGroup, house, admissionDate,
+            // Teacher fields
+            teacherId, qualification, department, experience, joiningDate, salary, designation, subjects
+          } = req.body;
+
+    if (!name || !email || !role) {
+      return res.status(400).json({ success: false, message: 'Name, email and role are required.' });
+    }
+
+    // Check for duplicate email in User collection
+    const existing = await User.findOne({ email: email.toLowerCase() });
+    if (existing) {
+      return res.status(400).json({ success: false, message: 'A user with this email already exists.' });
+    }
+
+    // Hash the default password
+    const hashedPassword = await bcrypt.hash('Welcome@123', 10);
+
+    // 1. Create User (auth/login record)
+    const authUser = await User.create({
+      name,
+      email: email.toLowerCase(),
+      password: hashedPassword,
+      role,
+      isActive: true,
     });
-    
-    return res.json({ 
-      success: true, 
-      message: "Registration submitted successfully!" 
+
+    let profile = null;
+
+    // 2. Create the role-specific profile
+    if (role === 'Student') {
+      // Look up the class to get standard & section strings
+      let standard = '';
+      let section = '';
+      let resolvedClassId = classId || null;
+
+      if (classId) {
+        const classDoc = await Class.findById(classId);
+        if (classDoc) {
+          standard = classDoc.standard || '';
+          section  = classDoc.section  || '';
+        }
+      }
+
+      // Auto-generate unique roll number
+      const rollNo = `S-${Date.now().toString().slice(-7)}`;
+
+      profile = await Student.create({
+        name,
+        email: email.toLowerCase(),
+        phone: mobile || '',           // mobile → phone field mapping
+        address: address || '',
+        gender: gender || 'Male',
+        bloodGroup: bloodGroup || '',
+        parentName: parentName || '',
+        parentPhone: parentPhone || '',
+        house: house || 'Red House',
+        admissionDate: admissionDate ? new Date(admissionDate) : new Date(),
+        classId: resolvedClassId,
+        standard,
+        section,
+        rollNo,
+        feeStatus: 'Pending',
+        isActive: true,
+      });
+
+      // 3. Push student into the Class's students array
+      if (resolvedClassId) {
+        await Class.findByIdAndUpdate(resolvedClassId, {
+          $push: { students: profile._id }
+        });
+      }
+
+    } else if (role === 'Teacher') {
+      const autoTeacherId = teacherId || `T-${Date.now().toString().slice(-7)}`;
+
+      profile = await Teacher.create({
+        name,
+        email: email.toLowerCase(),
+        phone: mobile || '',           // mobile → phone field mapping
+        teacherId: autoTeacherId,
+        designation: designation || '',
+        department: department || '',
+        qualification: qualification || '',
+        experience: experience ? Number(experience) : 0,
+        salary: salary ? Number(salary) : 0,
+        subjects: subjects || [],
+        isActive: true,
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: `${role} account created successfully! Default password: Welcome@123`,
+      data: { user: authUser, profile }
     });
+
   } catch (error) {
-    console.error("Registration Error:", error);
+    console.error('User Creation Error:', error);
     return res.status(500).json({ success: false, message: error.message });
   }
 });

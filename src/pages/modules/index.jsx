@@ -1,1341 +1,4 @@
-// // // src/pages/modules/index.jsx
-// // // ═══════════════════════════════════════════════════════════════════
-// // // ALL MODULE PAGES for Admin Dashboard
-// // // Import whichever you need in App.jsx
-// // // ═══════════════════════════════════════════════════════════════════
 
-// // import React, { useState, useEffect, useCallback } from 'react';
-// // import { useSelector } from 'react-redux';
-
-// // // ─── Design tokens ───────────────────────────────────────────────
-// // const C = {
-// //   bg:'#0d1117', surface:'#161b22', alt:'#1c2128', border:'#30363d',
-// //   accent:'#58a6ff', accentDim:'rgba(88,166,255,.12)',
-// //   success:'#3fb950', successDim:'rgba(63,185,80,.12)',
-// //   warning:'#d29922', warningDim:'rgba(210,153,34,.12)',
-// //   danger:'#f85149',  dangerDim:'rgba(248,81,73,.10)',
-// //   purple:'#bc8cff',  purpleDim:'rgba(188,140,255,.12)',
-// //   orange:'#ffa657',  orangeDim:'rgba(255,166,87,.12)',
-// //   text:'#e6edf3', muted:'#8b949e', faint:'#484f58',
-// // };
-
-// // const BASE = 'http://localhost:5000/api';
-// // const useToken = () => useSelector(s => s.auth.token);
-
-// // // ─── Fetch hook ───────────────────────────────────────────────────
-// // function useFetch(url, deps=[]) {
-// //   const token = useToken();
-// //   const [data,    setData]    = useState(null);
-// //   const [loading, setLoading] = useState(true);
-// //   const [error,   setError]   = useState('');
-// //   const load = useCallback(async () => {
-// //     setLoading(true); setError('');
-// //     try {
-// //       const r = await fetch(`${BASE}${url}`, { headers:{ Authorization:`Bearer ${token}` } });
-// //       const j = await r.json();
-// //       if (j.success) setData(j.data);
-// //       else setError(j.message);
-// //     } catch(e) { setError(e.message); }
-// //     finally { setLoading(false); }
-// //   }, [url, token, ...deps]);
-// //   useEffect(() => { load(); }, [load]);
-// //   return { data, loading, error, reload: load };
-// // }
-
-// // // ─── API call helper ──────────────────────────────────────────────
-// // async function call(token, method, path, body) {
-// //   const r = await fetch(`${BASE}${path}`, {
-// //     method, headers:{ 'Content-Type':'application/json', Authorization:`Bearer ${token}` },
-// //     body: body ? JSON.stringify(body) : undefined,
-// //   });
-// //   return r.json();
-// // }
-
-// // // ─── Shared UI atoms ─────────────────────────────────────────────
-// // const css = `
-// //   @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600;700&display=swap');
-// //   @keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
-// //   input,select,textarea { background:${C.bg}!important; color:${C.text}!important; border:1px solid ${C.border}!important; border-radius:8px!important; padding:8px 12px!important; font-family:'DM Sans',sans-serif!important; font-size:13px!important; outline:none!important; width:100%; box-sizing:border-box; }
-// //   input:focus,select:focus,textarea:focus { border-color:${C.accent}!important; box-shadow:0 0 0 3px ${C.accentDim}!important; }
-// //   input::placeholder,textarea::placeholder { color:${C.faint}!important; }
-// // `;
-
-// // function PageWrap({ children }) {
-// //   return (
-// //     <div style={{ animation:'fadeUp .3s ease' }}>
-// //       <style>{css}</style>
-// //       {children}
-// //     </div>
-// //   );
-// // }
-
-// // function Card({ children, style={} }) {
-// //   return <div style={{ background:C.surface, border:`1px solid ${C.border}`, borderRadius:12, padding:20, ...style }}>{children}</div>;
-// // }
-
-// // function PageHeader({ title, subtitle, action }) {
-// //   return (
-// //     <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:20, flexWrap:'wrap', gap:12 }}>
-// //       <div>
-// //         <h2 style={{ fontFamily:"'Syne',sans-serif", fontSize:20, fontWeight:800, color:C.text, margin:0 }}>{title}</h2>
-// //         {subtitle && <p style={{ fontSize:13, color:C.muted, marginTop:4 }}>{subtitle}</p>}
-// //       </div>
-// //       {action}
-// //     </div>
-// //   );
-// // }
-
-// // function Btn({ children, onClick, color=C.accent, dim=C.accentDim, disabled, small }) {
-// //   const [h, sH] = useState(false);
-// //   return (
-// //     <button onClick={onClick} disabled={disabled} onMouseEnter={()=>sH(true)} onMouseLeave={()=>sH(false)}
-// //       style={{
-// //         padding: small ? '5px 12px' : '8px 18px',
-// //         background: h ? color+'30' : dim,
-// //         border:`1px solid ${color}55`, borderRadius:8,
-// //         color, fontWeight:700, fontSize: small ? 12 : 13,
-// //         cursor:disabled?'not-allowed':'pointer', opacity:disabled?.6:1,
-// //         fontFamily:"'DM Sans',sans-serif", transition:'all .15s',
-// //       }}>
-// //       {children}
-// //     </button>
-// //   );
-// // }
-
-// // function DangerBtn({ children, onClick, small }) {
-// //   return <Btn onClick={onClick} color={C.danger} dim={C.dangerDim} small={small}>{children}</Btn>;
-// // }
-
-// // function SuccessBtn({ children, onClick, small }) {
-// //   return <Btn onClick={onClick} color={C.success} dim={C.successDim} small={small}>{children}</Btn>;
-// // }
-
-// // function Badge({ label, color }) {
-// //   return <span style={{ padding:'2px 9px', borderRadius:20, fontSize:11, fontWeight:700, background:color+'20', color, border:`1px solid ${color}44` }}>{label}</span>;
-// // }
-
-// // function LoadState({ loading, error, empty, children }) {
-// //   if (loading) return <div style={{ textAlign:'center', padding:60, color:C.muted }}>Loading…</div>;
-// //   if (error)   return <div style={{ textAlign:'center', padding:60, color:C.danger }}>{error}</div>;
-// //   if (empty)   return (
-// //     <div style={{ textAlign:'center', padding:60, color:C.muted }}>
-// //       <div style={{ fontSize:40, marginBottom:12, opacity:.2 }}>◎</div>
-// //       <div>No records found</div>
-// //     </div>
-// //   );
-// //   return children;
-// // }
-
-// // function Table({ cols, rows, keyFn }) {
-// //   return (
-// //     <div style={{ overflowX:'auto' }}>
-// //       <table style={{ width:'100%', borderCollapse:'collapse' }}>
-// //         <thead>
-// //           <tr style={{ background:C.alt, borderBottom:`1px solid ${C.border}` }}>
-// //             {cols.map(c => (
-// //               <th key={c.key||c.label} style={{ padding:'10px 14px', textAlign:c.center?'center':'left', fontSize:11, fontWeight:700, color:C.muted, letterSpacing:'.07em', textTransform:'uppercase', whiteSpace:'nowrap' }}>
-// //                 {c.label}
-// //               </th>
-// //             ))}
-// //           </tr>
-// //         </thead>
-// //         <tbody>
-// //           {rows.map((row, i) => (
-// //             <tr key={keyFn(row)} style={{ borderBottom:`1px solid ${C.border}`, transition:'background .15s' }}
-// //               onMouseEnter={e=>e.currentTarget.style.background=C.alt}
-// //               onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
-// //               {cols.map(c => (
-// //                 <td key={c.key||c.label} style={{ padding:'12px 14px', fontSize:12, color:C.text, textAlign:c.center?'center':'left' }}>
-// //                   {c.render ? c.render(row) : row[c.key]}
-// //                 </td>
-// //               ))}
-// //             </tr>
-// //           ))}
-// //         </tbody>
-// //       </table>
-// //     </div>
-// //   );
-// // }
-
-// // function Modal({ open, onClose, title, children, width=500 }) {
-// //   if (!open) return null;
-// //   return (
-// //     <div onClick={onClose} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.7)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center', padding:16 }}>
-// //       <div onClick={e=>e.stopPropagation()} style={{ background:C.surface, border:`1px solid ${C.border}`, borderRadius:14, width:'100%', maxWidth:width, maxHeight:'90vh', overflowY:'auto', padding:24 }}>
-// //         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20 }}>
-// //           <div style={{ fontFamily:"'Syne',sans-serif", fontSize:16, fontWeight:800, color:C.text }}>{title}</div>
-// //           <button onClick={onClose} style={{ background:'none', border:'none', color:C.muted, cursor:'pointer', fontSize:20 }}>✕</button>
-// //         </div>
-// //         {children}
-// //       </div>
-// //     </div>
-// //   );
-// // }
-
-// // function FormGroup({ label, children }) {
-// //   return (
-// //     <div style={{ marginBottom:14 }}>
-// //       <label style={{ display:'block', fontSize:11, fontWeight:700, color:C.muted, letterSpacing:'.06em', textTransform:'uppercase', marginBottom:6 }}>{label}</label>
-// //       {children}
-// //     </div>
-// //   );
-// // }
-
-// // function StatCard({ label, value, color, icon, delta }) {
-// //   return (
-// //     <div style={{ background:C.surface, border:`1px solid ${C.border}`, borderRadius:12, padding:'16px 20px' }}>
-// //       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
-// //         <div>
-// //           <div style={{ fontSize:11, color:C.muted, fontWeight:600, textTransform:'uppercase', letterSpacing:'.06em' }}>{label}</div>
-// //           <div style={{ fontSize:26, fontWeight:800, color:C.text, marginTop:6, fontFamily:"'Syne',sans-serif" }}>{value}</div>
-// //           {delta && <div style={{ fontSize:11, color:C.muted, marginTop:3 }}>{delta}</div>}
-// //         </div>
-// //         <div style={{ width:38, height:38, borderRadius:10, background:color+'18', display:'flex', alignItems:'center', justifyContent:'center', fontSize:17, color }}>{icon}</div>
-// //       </div>
-// //     </div>
-// //   );
-// // }
-
-// // // ════════════════════════════════════════════════════════════════
-// // // 1. STUDENTS PAGE
-// // // ════════════════════════════════════════════════════════════════
-// // export function StudentsPage() {
-// //   const token = useToken();
-// //   const [search,  setSearch]  = useState('');
-// //   const [stdFilt, setStdFilt] = useState('');
-// //   const [modal,   setModal]   = useState(false);
-// //   const [editing, setEditing] = useState(null);
-// //   const [form,    setForm]    = useState({});
-// //   const [saving,  setSaving]  = useState(false);
-// //   const [toast,   setToast]   = useState(null);
-
-// //   const params = new URLSearchParams({ ...(search&&{search}), ...(stdFilt&&{standard:stdFilt}) }).toString();
-// //   const { data, loading, error, reload } = useFetch(`/students?${params}`, [search, stdFilt]);
-// //   const students = data?.students || [];
-
-// //   const showToast = (msg, ok=true) => { setToast({msg,ok}); setTimeout(()=>setToast(null),3000); };
-
-// //   const openAdd  = () => { setEditing(null); setForm({}); setModal(true); };
-// //   const openEdit = (s) => { setEditing(s); setForm({ name:s.name,email:s.email,rollNo:s.rollNo,standard:s.standard,section:s.section,phone:s.phone,parentName:s.parentName,parentPhone:s.parentPhone }); setModal(true); };
-
-// //   const save = async () => {
-// //     setSaving(true);
-// //     const r = await call(token, editing?'PUT':'POST', editing?`/students/${editing._id}`:'/students', form);
-// //     setSaving(false);
-// //     if (r.success) { showToast(editing?'Student updated':'Student created'); setModal(false); reload(); }
-// //     else showToast(r.message, false);
-// //   };
-
-// //   const deactivate = async (id) => {
-// //     if (!window.confirm('Deactivate this student?')) return;
-// //     const r = await call(token,'DELETE',`/students/${id}`);
-// //     if (r.success) { showToast('Student deactivated'); reload(); }
-// //   };
-
-// //   const STANDARDS = ['6','7','8','9','10'];
-
-// //   return (
-// //     <PageWrap>
-// //       {toast && <div style={{ position:'fixed', top:20, right:20, zIndex:9999, padding:'12px 20px', borderRadius:10, background:toast.ok?C.successDim:C.dangerDim, border:`1px solid ${toast.ok?C.success:C.danger}`, color:toast.ok?C.success:C.danger, fontWeight:700, fontSize:13 }}>{toast.msg}</div>}
-
-// //       <PageHeader title="Students" subtitle={`${data?.total||0} total students`}
-// //         action={<Btn onClick={openAdd}>+ Add Student</Btn>} />
-
-// //       <div style={{ display:'flex', gap:10, marginBottom:16, flexWrap:'wrap' }}>
-// //         <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search by name…" style={{ flex:1, minWidth:200 }} />
-// //         <select value={stdFilt} onChange={e=>setStdFilt(e.target.value)} style={{ width:140 }}>
-// //           <option value="">All Standards</option>
-// //           {STANDARDS.map(s=><option key={s} value={s}>Class {s}</option>)}
-// //         </select>
-// //       </div>
-
-// //       <Card>
-// //         <LoadState loading={loading} error={error} empty={!students.length}>
-// //           <Table
-// //             keyFn={r=>r._id}
-// //             cols={[
-// //               { label:'Student', render:r=>(
-// //                 <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-// //                   <div style={{ width:32, height:32, borderRadius:'50%', background:C.accentDim, border:`1px solid ${C.accent}44`, display:'flex', alignItems:'center', justifyContent:'center', color:C.accent, fontWeight:700, fontSize:13, flexShrink:0 }}>{r.name?.charAt(0)}</div>
-// //                   <div><div style={{ fontWeight:600 }}>{r.name}</div><div style={{ fontSize:11, color:C.muted }}>{r.email}</div></div>
-// //                 </div>
-// //               )},
-// //               { label:'Roll No', key:'rollNo' },
-// //               { label:'Class',   render:r=>`${r.standard}${r.section}` },
-// //               { label:'Parent',  render:r=><div><div>{r.parentName}</div><div style={{ fontSize:11, color:C.muted }}>{r.parentPhone}</div></div> },
-// //               { label:'Fee',     render:r=><Badge label={r.feeStatus} color={r.feeStatus==='Paid'?C.success:r.feeStatus==='Pending'?C.warning:C.danger} /> },
-// //               { label:'Actions', center:true, render:r=>(
-// //                 <div style={{ display:'flex', gap:6, justifyContent:'center' }}>
-// //                   <Btn small onClick={()=>openEdit(r)}>Edit</Btn>
-// //                   <DangerBtn small onClick={()=>deactivate(r._id)}>Remove</DangerBtn>
-// //                 </div>
-// //               )},
-// //             ]}
-// //             rows={students}
-// //           />
-// //         </LoadState>
-// //       </Card>
-
-// //       <Modal open={modal} onClose={()=>setModal(false)} title={editing?'Edit Student':'Add Student'}>
-// //         {[['name','Full Name'],['email','Email'],['rollNo','Roll No'],['phone','Phone'],['standard','Standard (6-10)'],['section','Section (A/B/C)'],['parentName','Parent Name'],['parentPhone','Parent Phone']].map(([k,l])=>(
-// //           <FormGroup key={k} label={l}>
-// //             <input value={form[k]||''} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} placeholder={l} />
-// //           </FormGroup>
-// //         ))}
-// //         <div style={{ display:'flex', gap:10, marginTop:8 }}>
-// //           <Btn onClick={save} disabled={saving}>{saving?'Saving…':'Save Student'}</Btn>
-// //           <Btn onClick={()=>setModal(false)} color={C.muted} dim={C.alt}>Cancel</Btn>
-// //         </div>
-// //       </Modal>
-// //     </PageWrap>
-// //   );
-// // }
-
-// // // ════════════════════════════════════════════════════════════════
-// // // 2. TEACHERS PAGE
-// // // ════════════════════════════════════════════════════════════════
-// // export function TeachersPage() {
-// //   const token = useToken();
-// //   const [search, setSearch] = useState('');
-// //   const [modal,  setModal]  = useState(false);
-// //   const [editing,setEditing]= useState(null);
-// //   const [form,   setForm]   = useState({});
-// //   const [saving, setSaving] = useState(false);
-// //   const [toast,  setToast]  = useState(null);
-
-// //   const { data, loading, error, reload } = useFetch(`/teachers?${search?`search=${search}`:''}`, [search]);
-// //   const teachers = data?.teachers || [];
-
-// //   const showToast = (msg,ok=true)=>{setToast({msg,ok});setTimeout(()=>setToast(null),3000);};
-// //   const openAdd  = ()=>{setEditing(null);setForm({});setModal(true);};
-// //   const openEdit = (t)=>{setEditing(t);setForm({name:t.name,email:t.email,teacherId:t.teacherId,phone:t.phone,designation:t.designation,department:t.department,qualification:t.qualification,experience:t.experience,salary:t.salary});setModal(true);};
-
-// //   const save = async()=>{
-// //     setSaving(true);
-// //     const r=await call(token,editing?'PUT':'POST',editing?`/teachers/${editing._id}`:'/teachers',form);
-// //     setSaving(false);
-// //     if(r.success){showToast(editing?'Updated':'Created');setModal(false);reload();}
-// //     else showToast(r.message,false);
-// //   };
-
-// //   return (
-// //     <PageWrap>
-// //       {toast&&<div style={{position:'fixed',top:20,right:20,zIndex:9999,padding:'12px 20px',borderRadius:10,background:toast.ok?C.successDim:C.dangerDim,border:`1px solid ${toast.ok?C.success:C.danger}`,color:toast.ok?C.success:C.danger,fontWeight:700,fontSize:13}}>{toast.msg}</div>}
-// //       <PageHeader title="Teachers & Staff" subtitle={`${data?.total||0} staff members`} action={<Btn onClick={openAdd}>+ Add Teacher</Btn>} />
-// //       <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search teachers…" style={{ marginBottom:16, maxWidth:300 }} />
-// //       <Card>
-// //         <LoadState loading={loading} error={error} empty={!teachers.length}>
-// //           <Table keyFn={r=>r._id} rows={teachers} cols={[
-// //             { label:'Teacher', render:r=>(
-// //               <div style={{display:'flex',alignItems:'center',gap:10}}>
-// //                 <div style={{width:34,height:34,borderRadius:'50%',background:C.purpleDim,border:`1px solid ${C.purple}44`,display:'flex',alignItems:'center',justifyContent:'center',color:C.purple,fontWeight:700,fontSize:13,flexShrink:0}}>{r.name?.charAt(0)}</div>
-// //                 <div><div style={{fontWeight:600}}>{r.name}</div><div style={{fontSize:11,color:C.muted}}>{r.email}</div></div>
-// //               </div>
-// //             )},
-// //             { label:'Teacher ID', key:'teacherId' },
-// //             { label:'Designation', key:'designation' },
-// //             { label:'Department', key:'department' },
-// //             { label:'Exp', render:r=>`${r.experience||0} yrs` },
-// //             { label:'Salary', render:r=>`₹${(r.salary||0).toLocaleString()}` },
-// //             { label:'Actions', center:true, render:r=>(
-// //               <div style={{display:'flex',gap:6,justifyContent:'center'}}>
-// //                 <Btn small onClick={()=>openEdit(r)}>Edit</Btn>
-// //               </div>
-// //             )},
-// //           ]} />
-// //         </LoadState>
-// //       </Card>
-// //       <Modal open={modal} onClose={()=>setModal(false)} title={editing?'Edit Teacher':'Add Teacher'}>
-// //         {[['name','Full Name'],['email','Email'],['teacherId','Teacher ID'],['phone','Phone'],['designation','Designation'],['department','Department'],['qualification','Qualification'],['experience','Experience (years)'],['salary','Salary (₹)']].map(([k,l])=>(
-// //           <FormGroup key={k} label={l}><input value={form[k]||''} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} placeholder={l} /></FormGroup>
-// //         ))}
-// //         <div style={{display:'flex',gap:10,marginTop:8}}>
-// //           <Btn onClick={save} disabled={saving}>{saving?'Saving…':'Save'}</Btn>
-// //           <Btn onClick={()=>setModal(false)} color={C.muted} dim={C.alt}>Cancel</Btn>
-// //         </div>
-// //       </Modal>
-// //     </PageWrap>
-// //   );
-// // }
-
-// // // ════════════════════════════════════════════════════════════════
-// // // 3. CLASSES PAGE
-// // // ════════════════════════════════════════════════════════════════
-// // export function ClassesPage() {
-// //   const token = useToken();
-// //   const { data:classes, loading, error, reload } = useFetch('/classes');
-// //   const { data:teachers } = useFetch('/teachers?limit=100');
-// //   const [modal, setModal] = useState(false);
-// //   const [form,  setForm]  = useState({});
-// //   const [saving,setSaving]= useState(false);
-// //   const teacherList = teachers?.teachers || [];
-
-// //   const save = async()=>{
-// //     setSaving(true);
-// //     const r=await call(token,'POST','/classes',form);
-// //     setSaving(false);
-// //     if(r.success){setModal(false);reload();}
-// //   };
-
-// //   return (
-// //     <PageWrap>
-// //       <PageHeader title="Classes & Subjects" subtitle={`${(classes||[]).length} classes configured`} action={<Btn onClick={()=>setModal(true)}>+ New Class</Btn>} />
-// //       <LoadState loading={loading} error={error} empty={!(classes||[]).length}>
-// //         <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))',gap:14}}>
-// //           {(classes||[]).map(c=>(
-// //             <Card key={c._id}>
-// //               <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
-// //                 <div>
-// //                   <div style={{fontFamily:"'Syne',sans-serif",fontSize:16,fontWeight:800,color:C.text}}>{c.name}</div>
-// //                   <div style={{fontSize:12,color:C.muted,marginTop:3}}>Class Teacher: {c.classTeacher?.name||'Unassigned'}</div>
-// //                   <div style={{fontSize:12,color:C.muted}}>Room: {c.room||'—'} · Capacity: {c.capacity}</div>
-// //                 </div>
-// //                 <div style={{padding:'4px 10px',borderRadius:20,background:C.accentDim,color:C.accent,fontSize:13,fontWeight:800}}>{c.students?.length||0}</div>
-// //               </div>
-// //               <div style={{marginTop:12,display:'flex',flexWrap:'wrap',gap:5}}>
-// //                 {(c.subjects||[]).slice(0,5).map(s=>(
-// //                   <span key={s} style={{fontSize:10,padding:'2px 7px',borderRadius:20,background:C.alt,color:C.muted,border:`1px solid ${C.border}`}}>{s}</span>
-// //                 ))}
-// //                 {(c.subjects||[]).length>5&&<span style={{fontSize:10,color:C.muted}}>+{c.subjects.length-5} more</span>}
-// //               </div>
-// //             </Card>
-// //           ))}
-// //         </div>
-// //       </LoadState>
-// //       <Modal open={modal} onClose={()=>setModal(false)} title="Create Class">
-// //         <FormGroup label="Standard"><select value={form.standard||''} onChange={e=>setForm(f=>({...f,standard:e.target.value}))}><option value="">Select</option>{['6','7','8','9','10'].map(s=><option key={s} value={s}>{s}</option>)}</select></FormGroup>
-// //         <FormGroup label="Section"><select value={form.section||''} onChange={e=>setForm(f=>({...f,section:e.target.value}))}><option value="">Select</option>{['A','B','C'].map(s=><option key={s} value={s}>{s}</option>)}</select></FormGroup>
-// //         <FormGroup label="Class Teacher"><select value={form.classTeacher||''} onChange={e=>setForm(f=>({...f,classTeacher:e.target.value}))}><option value="">Select teacher</option>{teacherList.map(t=><option key={t._id} value={t._id}>{t.name}</option>)}</select></FormGroup>
-// //         <FormGroup label="Room No"><input value={form.room||''} onChange={e=>setForm(f=>({...f,room:e.target.value}))} /></FormGroup>
-// //         <div style={{display:'flex',gap:10,marginTop:8}}>
-// //           <Btn onClick={save} disabled={saving}>{saving?'Saving…':'Create Class'}</Btn>
-// //           <Btn onClick={()=>setModal(false)} color={C.muted} dim={C.alt}>Cancel</Btn>
-// //         </div>
-// //       </Modal>
-// //     </PageWrap>
-// //   );
-// // }
-
-// // // ════════════════════════════════════════════════════════════════
-// // // 4. ATTENDANCE PAGE
-// // // ════════════════════════════════════════════════════════════════
-// // export function AttendancePage() {
-// //   const token = useToken();
-// //   const { data:classes } = useFetch('/classes');
-// //   const [classId, setClassId] = useState('');
-// //   const [date,    setDate]    = useState(new Date().toISOString().split('T')[0]);
-// //   const [students,setStudents]= useState([]);
-// //   const [records, setRecords] = useState({});
-// //   const [saving,  setSaving]  = useState(false);
-// //   const [saved,   setSaved]   = useState(false);
-
-// //   useEffect(()=>{
-// //     if(!classId) return;
-// //     const cls = (classes||[]).find(c=>c._id===classId);
-// //     setStudents(cls?.students||[]);
-// //     setRecords({});
-// //   },[classId,classes]);
-
-// //   const toggle = (id, status) => setRecords(r=>({...r,[id]:status}));
-// //   const markAll = (status) => {
-// //     const r={};
-// //     students.forEach(s=>r[s._id]=status);
-// //     setRecords(r);
-// //   };
-
-// //   const submit = async()=>{
-// //     const recs = students.map(s=>({ studentId:s._id, status:records[s._id]||'Present' }));
-// //     setSaving(true);
-// //     const r=await call(token,'POST','/attendance',{ classId, date, records:recs });
-// //     setSaving(false);
-// //     if(r.success){setSaved(true);setTimeout(()=>setSaved(false),3000);}
-// //   };
-
-// //   const STATUS=['Present','Absent','Late'];
-// //   const statusColor={'Present':C.success,'Absent':C.danger,'Late':C.warning};
-
-// //   return (
-// //     <PageWrap>
-// //       <PageHeader title="Attendance" subtitle="Mark daily attendance for classes" />
-// //       <div style={{display:'flex',gap:10,marginBottom:20,flexWrap:'wrap'}}>
-// //         <select value={classId} onChange={e=>setClassId(e.target.value)} style={{width:200}}>
-// //           <option value="">Select Class</option>
-// //           {(classes||[]).map(c=><option key={c._id} value={c._id}>{c.name}</option>)}
-// //         </select>
-// //         <input type="date" value={date} onChange={e=>setDate(e.target.value)} style={{width:160}} />
-// //         <div style={{display:'flex',gap:6}}>
-// //           <SuccessBtn small onClick={()=>markAll('Present')}>All Present</SuccessBtn>
-// //           <DangerBtn  small onClick={()=>markAll('Absent')}>All Absent</DangerBtn>
-// //         </div>
-// //       </div>
-// //       {classId && (
-// //         <Card>
-// //           {students.length===0
-// //             ? <div style={{textAlign:'center',padding:40,color:C.muted}}>No students in this class</div>
-// //             : <>
-// //               <div style={{display:'flex',flexDirection:'column',gap:8,marginBottom:16}}>
-// //                 {students.map((s,i)=>{
-// //                   const st=records[s._id]||'Present';
-// //                   return (
-// //                     <div key={s._id} style={{display:'flex',alignItems:'center',gap:14,padding:'10px 14px',borderRadius:8,background:C.alt,border:`1px solid ${C.border}`,animation:`fadeUp .3s ease ${i*.03}s both`}}>
-// //                       <div style={{width:32,height:32,borderRadius:'50%',background:statusColor[st]+'20',border:`1px solid ${statusColor[st]}44`,display:'flex',alignItems:'center',justifyContent:'center',color:statusColor[st],fontWeight:700,fontSize:13,flexShrink:0}}>{s.name?.charAt(0)}</div>
-// //                       <div style={{flex:1}}><div style={{fontSize:13,fontWeight:600,color:C.text}}>{s.name}</div><div style={{fontSize:11,color:C.muted}}>{s.rollNo}</div></div>
-// //                       <div style={{display:'flex',gap:6}}>
-// //                         {STATUS.map(stat=>(
-// //                           <button key={stat} onClick={()=>toggle(s._id,stat)} style={{padding:'4px 12px',borderRadius:20,fontSize:11,fontWeight:700,cursor:'pointer',background:st===stat?statusColor[stat]+'25':C.surface,border:`1px solid ${st===stat?statusColor[stat]+'55':C.border}`,color:st===stat?statusColor[stat]:C.muted,transition:'all .15s'}}>
-// //                             {stat}
-// //                           </button>
-// //                         ))}
-// //                       </div>
-// //                     </div>
-// //                   );
-// //                 })}
-// //               </div>
-// //               <div style={{display:'flex',gap:10,alignItems:'center'}}>
-// //                 <Btn onClick={submit} disabled={saving}>{saving?'Saving…':'Save Attendance'}</Btn>
-// //                 {saved&&<span style={{fontSize:13,color:C.success,fontWeight:700}}>✓ Saved!</span>}
-// //                 <span style={{fontSize:12,color:C.muted,marginLeft:'auto'}}>
-// //                   P: {Object.values(records).filter(v=>v==='Present').length} · A: {Object.values(records).filter(v=>v==='Absent').length} · L: {Object.values(records).filter(v=>v==='Late').length}
-// //                 </span>
-// //               </div>
-// //             </>
-// //           }
-// //         </Card>
-// //       )}
-// //     </PageWrap>
-// //   );
-// // }
-
-// // // ════════════════════════════════════════════════════════════════
-// // // 5. EXAMINATIONS PAGE
-// // // ════════════════════════════════════════════════════════════════
-// // export function ExaminationsPage() {
-// //   const token = useToken();
-// //   const { data:exams, loading, error, reload } = useFetch('/exams');
-// //   const [modal,  setModal]  = useState(false);
-// //   const [form,   setForm]   = useState({ name:'',type:'Unit Test',standard:'10',subject:'Mathematics',totalMarks:100,duration:180,date:'' });
-// //   const [saving, setSaving] = useState(false);
-
-// //   const save=async()=>{
-// //     setSaving(true);
-// //     const r=await call(token,'POST','/exams',form);
-// //     setSaving(false);
-// //     if(r.success){setModal(false);reload();}
-// //   };
-
-// //   const del=async(id)=>{
-// //     if(!window.confirm('Delete this exam?'))return;
-// //     await call(token,'DELETE',`/exams/${id}`);
-// //     reload();
-// //   };
-
-// //   const upcoming = (exams||[]).filter(e=>new Date(e.date)>=new Date());
-// //   const past     = (exams||[]).filter(e=>new Date(e.date)<new Date());
-
-// //   return (
-// //     <PageWrap>
-// //       <PageHeader title="Examinations" subtitle="Schedule and manage exams" action={<Btn onClick={()=>setModal(true)}>+ Schedule Exam</Btn>} />
-// //       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:20}}>
-// //         <StatCard label="Upcoming Exams" value={upcoming.length} color={C.danger} icon="◈" />
-// //         <StatCard label="Completed Exams" value={past.length} color={C.success} icon="✓" />
-// //       </div>
-// //       <LoadState loading={loading} error={error} empty={!(exams||[]).length}>
-// //         {upcoming.length>0&&<div style={{marginBottom:20}}>
-// //           <div style={{fontSize:12,fontWeight:700,color:C.accent,letterSpacing:'.07em',textTransform:'uppercase',marginBottom:10}}>Upcoming</div>
-// //           <div style={{display:'flex',flexDirection:'column',gap:8}}>
-// //             {upcoming.map(e=><ExamCard key={e._id} exam={e} onDelete={del} color={C.danger} />)}
-// //           </div>
-// //         </div>}
-// //         {past.length>0&&<div>
-// //           <div style={{fontSize:12,fontWeight:700,color:C.muted,letterSpacing:'.07em',textTransform:'uppercase',marginBottom:10}}>Completed</div>
-// //           <div style={{display:'flex',flexDirection:'column',gap:8}}>
-// //             {past.map(e=><ExamCard key={e._id} exam={e} onDelete={del} color={C.success} />)}
-// //           </div>
-// //         </div>}
-// //       </LoadState>
-// //       <Modal open={modal} onClose={()=>setModal(false)} title="Schedule Exam">
-// //         <FormGroup label="Exam Name"><input value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))} placeholder="e.g. Unit Test 1" /></FormGroup>
-// //         <FormGroup label="Type"><select value={form.type} onChange={e=>setForm(f=>({...f,type:e.target.value}))}>{['Unit Test','Mid Term','Final','Talent Test'].map(t=><option key={t}>{t}</option>)}</select></FormGroup>
-// //         <FormGroup label="Standard"><select value={form.standard} onChange={e=>setForm(f=>({...f,standard:e.target.value}))}>{['6','7','8','9','10'].map(s=><option key={s} value={s}>Class {s}</option>)}</select></FormGroup>
-// //         <FormGroup label="Subject"><input value={form.subject} onChange={e=>setForm(f=>({...f,subject:e.target.value}))} /></FormGroup>
-// //         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
-// //           <FormGroup label="Total Marks"><input type="number" value={form.totalMarks} onChange={e=>setForm(f=>({...f,totalMarks:+e.target.value}))} /></FormGroup>
-// //           <FormGroup label="Duration (min)"><input type="number" value={form.duration} onChange={e=>setForm(f=>({...f,duration:+e.target.value}))} /></FormGroup>
-// //         </div>
-// //         <FormGroup label="Date & Time"><input type="datetime-local" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))} /></FormGroup>
-// //         <div style={{display:'flex',gap:10,marginTop:8}}>
-// //           <Btn onClick={save} disabled={saving}>{saving?'Saving…':'Schedule'}</Btn>
-// //           <Btn onClick={()=>setModal(false)} color={C.muted} dim={C.alt}>Cancel</Btn>
-// //         </div>
-// //       </Modal>
-// //     </PageWrap>
-// //   );
-// // }
-// // function ExamCard({exam,onDelete,color}) {
-// //   return (
-// //     <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:10,padding:'12px 16px',display:'flex',alignItems:'center',gap:14}}>
-// //       <div style={{width:4,height:40,borderRadius:2,background:color,flexShrink:0}} />
-// //       <div style={{flex:1}}>
-// //         <div style={{fontSize:13,fontWeight:700,color:C.text}}>{exam.name}</div>
-// //         <div style={{fontSize:11,color:C.muted}}>Class {exam.standard} · {exam.subject} · {exam.totalMarks} marks · {exam.duration}min</div>
-// //       </div>
-// //       <div style={{fontSize:12,fontWeight:700,color,background:color+'18',padding:'4px 10px',borderRadius:8}}>
-// //         {new Date(exam.date).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}
-// //       </div>
-// //       <Badge label={exam.type} color={color} />
-// //       <DangerBtn small onClick={()=>onDelete(exam._id)}>Delete</DangerBtn>
-// //     </div>
-// //   );
-// // }
-
-// // // ════════════════════════════════════════════════════════════════
-// // // 6. TIMETABLE PAGE
-// // // ════════════════════════════════════════════════════════════════
-// // export function TimetablePage() {
-// //   const { data:classes } = useFetch('/classes');
-// //   const [classId, setClassId] = useState('');
-// //   const { data:tt, loading } = useFetch(`/timetable?${classId?`classId=${classId}`:''}`, [classId]);
-
-// //   const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-// //   const dayMap = {};
-// //   (tt||[]).forEach(t=>{ dayMap[t.day]=t.periods||[]; });
-
-// //   return (
-// //     <PageWrap>
-// //       <PageHeader title="Timetable" subtitle="View class schedules" />
-// //       <select value={classId} onChange={e=>setClassId(e.target.value)} style={{marginBottom:16,width:200}}>
-// //         <option value="">Select Class</option>
-// //         {(classes||[]).map(c=><option key={c._id} value={c._id}>{c.name}</option>)}
-// //       </select>
-// //       {classId && (
-// //         loading ? <div style={{color:C.muted,padding:40,textAlign:'center'}}>Loading…</div> :
-// //         <div style={{overflowX:'auto'}}>
-// //           <table style={{width:'100%',borderCollapse:'collapse'}}>
-// //             <thead>
-// //               <tr style={{background:C.alt}}>
-// //                 <th style={{padding:'10px 14px',fontSize:11,fontWeight:700,color:C.muted,textTransform:'uppercase',letterSpacing:'.07em',textAlign:'left',border:`1px solid ${C.border}`}}>Day</th>
-// //                 {(dayMap[DAYS[0]]||Array(7).fill(null)).map((_,i)=>(
-// //                   <th key={i} style={{padding:'10px 14px',fontSize:11,fontWeight:700,color:C.muted,textTransform:'uppercase',letterSpacing:'.07em',border:`1px solid ${C.border}`}}>Period {i+1}</th>
-// //                 ))}
-// //               </tr>
-// //             </thead>
-// //             <tbody>
-// //               {DAYS.map(day=>(
-// //                 <tr key={day}>
-// //                   <td style={{padding:'10px 14px',background:C.alt,fontWeight:700,fontSize:12,color:C.accent,border:`1px solid ${C.border}`,whiteSpace:'nowrap'}}>{day}</td>
-// //                   {(dayMap[day]||[]).map((p,i)=>(
-// //                     <td key={i} style={{padding:'8px 12px',border:`1px solid ${C.border}`,minWidth:110}}>
-// //                       <div style={{fontSize:12,fontWeight:600,color:C.text}}>{p.subject||'—'}</div>
-// //                       <div style={{fontSize:10,color:C.muted}}>{p.startTime}–{p.endTime}</div>
-// //                       <div style={{fontSize:10,color:C.faint}}>{p.teacher?.name||''}</div>
-// //                     </td>
-// //                   ))}
-// //                 </tr>
-// //               ))}
-// //             </tbody>
-// //           </table>
-// //         </div>
-// //       )}
-// //     </PageWrap>
-// //   );
-// // }
-
-// // // ════════════════════════════════════════════════════════════════
-// // // 7. FEES PAGE
-// // // ════════════════════════════════════════════════════════════════
-// // export function FeesPage() {
-// //   const token = useToken();
-// //   const [statusFilt, setStatusFilt] = useState('');
-// //   const [modal, setModal] = useState(false);
-// //   const [selected, setSelected] = useState(null);
-
-// //   const params = statusFilt ? `status=${statusFilt}` : '';
-// //   const { data, loading, error, reload } = useFetch(`/fees?${params}`, [statusFilt]);
-// //   const { data:summary } = useFetch('/fees/summary');
-// //   const fees = data?.fees || [];
-
-// //   const markPaid = async(id)=>{
-// //     const r=await call(token,'PUT',`/fees/${id}`,{ status:'Paid', paidDate:new Date(), paidAmount: fees.find(f=>f._id===id)?.amount });
-// //     if(r.success) reload();
-// //   };
-
-// //   const byStatus = (summary?.byStatus||[]).reduce((acc,s)=>({...acc,[s._id]:s}),{});
-
-// //   return (
-// //     <PageWrap>
-// //       <PageHeader title="Fee Management" subtitle="Track and collect student fees" action={<Btn onClick={()=>setModal(true)}>+ Add Fee Record</Btn>} />
-// //       <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(180px,1fr))',gap:12,marginBottom:20}}>
-// //         <StatCard label="Total Collected" value={`₹${((byStatus.Paid?.paid||0)/100000).toFixed(1)}L`} color={C.success} icon="◆" />
-// //         <StatCard label="Pending" value={byStatus.Pending?.count||0} color={C.warning} icon="⏾" />
-// //         <StatCard label="Overdue" value={byStatus.Overdue?.count||0} color={C.danger} icon="⚠" />
-// //         <StatCard label="Partial" value={byStatus.Partial?.count||0} color={C.orange} icon="◑" />
-// //       </div>
-// //       <div style={{display:'flex',gap:10,marginBottom:14}}>
-// //         {['','Paid','Pending','Overdue','Partial'].map(s=>(
-// //           <button key={s} onClick={()=>setStatusFilt(s)} style={{padding:'6px 14px',borderRadius:20,fontSize:12,fontWeight:700,cursor:'pointer',background:statusFilt===s?C.accentDim:C.surface,border:`1px solid ${statusFilt===s?C.accent:C.border}`,color:statusFilt===s?C.accent:C.muted,transition:'all .15s'}}>
-// //             {s||'All'}
-// //           </button>
-// //         ))}
-// //       </div>
-// //       <Card>
-// //         <LoadState loading={loading} error={error} empty={!fees.length}>
-// //           <Table keyFn={r=>r._id} rows={fees} cols={[
-// //             { label:'Student', render:r=><div><div style={{fontWeight:600}}>{r.student?.name}</div><div style={{fontSize:11,color:C.muted}}>{r.student?.rollNo} · Class {r.student?.standard}{r.student?.section}</div></div> },
-// //             { label:'Fee Type', key:'feeType' },
-// //             { label:'Amount', render:r=>`₹${r.amount?.toLocaleString()}` },
-// //             { label:'Due Date', render:r=>new Date(r.dueDate).toLocaleDateString('en-IN') },
-// //             { label:'Status', render:r=><Badge label={r.status} color={r.status==='Paid'?C.success:r.status==='Pending'?C.warning:r.status==='Overdue'?C.danger:C.orange} /> },
-// //             { label:'Actions', center:true, render:r=>(
-// //               r.status!=='Paid'
-// //                 ? <SuccessBtn small onClick={()=>markPaid(r._id)}>Mark Paid</SuccessBtn>
-// //                 : <span style={{fontSize:11,color:C.success}}>✓ Paid</span>
-// //             )},
-// //           ]} />
-// //         </LoadState>
-// //       </Card>
-// //     </PageWrap>
-// //   );
-// // }
-
-// // // ════════════════════════════════════════════════════════════════
-// // // 8. HOMEWORK PAGE
-// // // ════════════════════════════════════════════════════════════════
-// // export function HomeworkPage() {
-// //   const token = useToken();
-// //   const { data:classes } = useFetch('/classes');
-// //   const { data:hw, loading, error, reload } = useFetch('/homework');
-// //   const [modal,  setModal]  = useState(false);
-// //   const [detail, setDetail] = useState(null);
-// //   const [form,   setForm]   = useState({ title:'',description:'',subject:'',classId:'',dueDate:'' });
-// //   const [saving, setSaving] = useState(false);
-
-// //   const save=async()=>{
-// //     setSaving(true);
-// //     const r=await call(token,'POST','/homework',form);
-// //     setSaving(false);
-// //     if(r.success){setModal(false);reload();}
-// //   };
-
-// //   return (
-// //     <PageWrap>
-// //       <PageHeader title="Homework & Assignments" subtitle="Assign and track homework" action={<Btn onClick={()=>setModal(true)}>+ Assign Homework</Btn>} />
-// //       <LoadState loading={loading} error={error} empty={!(hw||[]).length}>
-// //         <div style={{display:'flex',flexDirection:'column',gap:10}}>
-// //           {(hw||[]).map(h=>(
-// //             <div key={h._id} style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:10,padding:'14px 18px',display:'flex',alignItems:'center',gap:14,cursor:'pointer'}} onClick={()=>setDetail(h)}>
-// //               <div style={{width:4,height:44,borderRadius:2,background:new Date(h.dueDate)<new Date()?C.danger:C.accent,flexShrink:0}} />
-// //               <div style={{flex:1}}>
-// //                 <div style={{fontSize:13,fontWeight:700,color:C.text}}>{h.title}</div>
-// //                 <div style={{fontSize:11,color:C.muted}}>{h.subject} · {h.classId?.name} · by {h.assignedBy?.name}</div>
-// //               </div>
-// //               <div style={{textAlign:'right'}}>
-// //                 <div style={{fontSize:12,fontWeight:700,color:new Date(h.dueDate)<new Date()?C.danger:C.warning}}>Due: {new Date(h.dueDate).toLocaleDateString('en-IN')}</div>
-// //                 <div style={{fontSize:11,color:C.muted}}>{h.submissions?.length||0} submitted</div>
-// //               </div>
-// //             </div>
-// //           ))}
-// //         </div>
-// //       </LoadState>
-// //       <Modal open={modal} onClose={()=>setModal(false)} title="Assign Homework">
-// //         <FormGroup label="Title"><input value={form.title} onChange={e=>setForm(f=>({...f,title:e.target.value}))} placeholder="Assignment title" /></FormGroup>
-// //         <FormGroup label="Subject"><input value={form.subject} onChange={e=>setForm(f=>({...f,subject:e.target.value}))} /></FormGroup>
-// //         <FormGroup label="Class"><select value={form.classId} onChange={e=>setForm(f=>({...f,classId:e.target.value}))}><option value="">Select class</option>{(classes||[]).map(c=><option key={c._id} value={c._id}>{c.name}</option>)}</select></FormGroup>
-// //         <FormGroup label="Due Date"><input type="date" value={form.dueDate} onChange={e=>setForm(f=>({...f,dueDate:e.target.value}))} /></FormGroup>
-// //         <FormGroup label="Description"><textarea value={form.description} onChange={e=>setForm(f=>({...f,description:e.target.value}))} rows={3} placeholder="Instructions…" style={{resize:'vertical'}} /></FormGroup>
-// //         <div style={{display:'flex',gap:10,marginTop:8}}>
-// //           <Btn onClick={save} disabled={saving}>{saving?'Saving…':'Assign'}</Btn>
-// //           <Btn onClick={()=>setModal(false)} color={C.muted} dim={C.alt}>Cancel</Btn>
-// //         </div>
-// //       </Modal>
-// //       <Modal open={!!detail} onClose={()=>setDetail(null)} title={detail?.title||''} width={600}>
-// //         {detail&&<>
-// //           <div style={{fontSize:13,color:C.muted,marginBottom:14}}>{detail.description}</div>
-// //           <div style={{fontWeight:700,fontSize:12,color:C.text,marginBottom:10}}>Submissions ({detail.submissions?.length||0})</div>
-// //           {(detail.submissions||[]).length===0
-// //             ? <div style={{color:C.muted,fontSize:12}}>No submissions yet</div>
-// //             : (detail.submissions||[]).map((s,i)=>(
-// //               <div key={i} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 12px',borderRadius:8,background:C.alt,marginBottom:6}}>
-// //                 <div style={{flex:1}}><div style={{fontSize:12,fontWeight:600,color:C.text}}>{s.student?.name||`Student ${i+1}`}</div><div style={{fontSize:11,color:C.muted}}>{new Date(s.submittedAt).toLocaleDateString('en-IN')}</div></div>
-// //                 <Badge label={s.status} color={s.status==='Graded'?C.success:C.warning} />
-// //                 {s.grade&&<Badge label={s.grade} color={C.accent} />}
-// //               </div>
-// //             ))
-// //           }
-// //         </>}
-// //       </Modal>
-// //     </PageWrap>
-// //   );
-// // }
-
-// // // ════════════════════════════════════════════════════════════════
-// // // 9. LIBRARY PAGE
-// // // ════════════════════════════════════════════════════════════════
-// // export function LibraryPage() {
-// //   const token = useToken();
-// //   const [tab,    setTab]    = useState('books');
-// //   const [search, setSearch] = useState('');
-// //   const [modal,  setModal]  = useState(false);
-// //   const [form,   setForm]   = useState({});
-// //   const [saving, setSaving] = useState(false);
-
-// //   const { data:books, loading:bl, reload:rb } = useFetch(`/library/books?${search?`search=${search}`:''}`, [search]);
-// //   const { data:issues, loading:il, reload:ri } = useFetch('/library/issues');
-
-// //   const addBook=async()=>{
-// //     setSaving(true);
-// //     await call(token,'POST','/library/books',form);
-// //     setSaving(false);
-// //     setModal(false);rb();
-// //   };
-
-// //   const returnBook=async(id)=>{
-// //     const r=await call(token,'PUT',`/library/return/${id}`);
-// //     if(r.success)ri();
-// //   };
-
-// //   return (
-// //     <PageWrap>
-// //       <PageHeader title="Library" subtitle="Books and issue management" action={tab==='books'&&<Btn onClick={()=>setModal(true)}>+ Add Book</Btn>} />
-// //       <div style={{display:'flex',gap:8,marginBottom:16}}>
-// //         {['books','issues'].map(t=>(
-// //           <button key={t} onClick={()=>setTab(t)} style={{padding:'7px 18px',borderRadius:8,fontSize:12,fontWeight:700,cursor:'pointer',background:tab===t?C.accentDim:C.surface,border:`1px solid ${tab===t?C.accent:C.border}`,color:tab===t?C.accent:C.muted,textTransform:'capitalize'}}>
-// //             {t==='books'?'📚 Books':'📋 Issues'}
-// //           </button>
-// //         ))}
-// //       </div>
-// //       {tab==='books'&&<>
-// //         <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search books…" style={{marginBottom:14,maxWidth:320}} />
-// //         <LoadState loading={bl} error={null} empty={!(books||[]).length}>
-// //           <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(260px,1fr))',gap:12}}>
-// //             {(books||[]).map(b=>(
-// //               <Card key={b._id}>
-// //                 <div style={{fontSize:14,fontWeight:700,color:C.text,marginBottom:4}}>{b.title}</div>
-// //                 <div style={{fontSize:12,color:C.muted}}>{b.author}</div>
-// //                 <div style={{fontSize:11,color:C.faint,marginTop:4}}>ISBN: {b.isbn} · Shelf: {b.shelfNo}</div>
-// //                 <div style={{marginTop:10,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-// //                   <Badge label={b.category} color={C.purple} />
-// //                   <div style={{fontSize:12,fontWeight:700,color:b.available>0?C.success:C.danger}}>
-// //                     {b.available}/{b.copies} available
-// //                   </div>
-// //                 </div>
-// //               </Card>
-// //             ))}
-// //           </div>
-// //         </LoadState>
-// //       </>}
-// //       {tab==='issues'&&(
-// //         <Card>
-// //           <LoadState loading={il} error={null} empty={!(issues||[]).length}>
-// //             <Table keyFn={r=>r._id} rows={issues||[]} cols={[
-// //               { label:'Book', render:r=><div><div style={{fontWeight:600}}>{r.book?.title}</div><div style={{fontSize:11,color:C.muted}}>{r.book?.isbn}</div></div> },
-// //               { label:'Student', render:r=><div><div>{r.student?.name}</div><div style={{fontSize:11,color:C.muted}}>{r.student?.rollNo}</div></div> },
-// //               { label:'Issued', render:r=>new Date(r.issuedDate).toLocaleDateString('en-IN') },
-// //               { label:'Due', render:r=>new Date(r.dueDate).toLocaleDateString('en-IN') },
-// //               { label:'Status', render:r=><Badge label={r.status} color={r.status==='Returned'?C.success:r.status==='Overdue'?C.danger:C.warning} /> },
-// //               { label:'Fine', render:r=>r.fine>0?<span style={{color:C.danger,fontWeight:700}}>₹{r.fine}</span>:'—' },
-// //               { label:'Action', center:true, render:r=>r.status==='Issued'||r.status==='Overdue'?<SuccessBtn small onClick={()=>returnBook(r._id)}>Return</SuccessBtn>:null },
-// //             ]} />
-// //           </LoadState>
-// //         </Card>
-// //       )}
-// //       <Modal open={modal} onClose={()=>setModal(false)} title="Add Book">
-// //         {[['title','Title'],['author','Author'],['isbn','ISBN'],['publisher','Publisher'],['category','Category'],['shelfNo','Shelf No'],['copies','No. of Copies']].map(([k,l])=>(
-// //           <FormGroup key={k} label={l}><input value={form[k]||''} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} placeholder={l} /></FormGroup>
-// //         ))}
-// //         <div style={{display:'flex',gap:10,marginTop:8}}>
-// //           <Btn onClick={addBook} disabled={saving}>{saving?'Saving…':'Add Book'}</Btn>
-// //           <Btn onClick={()=>setModal(false)} color={C.muted} dim={C.alt}>Cancel</Btn>
-// //         </div>
-// //       </Modal>
-// //     </PageWrap>
-// //   );
-// // }
-
-// // // ════════════════════════════════════════════════════════════════
-// // // 10. ANNOUNCEMENTS PAGE
-// // // ════════════════════════════════════════════════════════════════
-// // export function AnnouncementsPage() {
-// //   const token = useToken();
-// //   const { data:ann, loading, error, reload } = useFetch('/announcements');
-// //   const [modal,  setModal]  = useState(false);
-// //   const [form,   setForm]   = useState({ title:'', content:'', audience:['All'], priority:'Normal' });
-// //   const [saving, setSaving] = useState(false);
-
-// //   const save=async()=>{
-// //     setSaving(true);
-// //     await call(token,'POST','/announcements',form);
-// //     setSaving(false);setModal(false);reload();
-// //   };
-
-// //   const del=async(id)=>{ await call(token,'DELETE',`/announcements/${id}`);reload(); };
-
-// //   const priorityColor={'Normal':C.muted,'Important':C.warning,'Urgent':C.danger};
-
-// //   return (
-// //     <PageWrap>
-// //       <PageHeader title="Announcements" subtitle="Post notices to staff and students" action={<Btn onClick={()=>setModal(true)}>+ Post Announcement</Btn>} />
-// //       <LoadState loading={loading} error={error} empty={!(ann||[]).length}>
-// //         <div style={{display:'flex',flexDirection:'column',gap:10}}>
-// //           {(ann||[]).map(a=>(
-// //             <Card key={a._id}>
-// //               <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:12}}>
-// //                 <div style={{flex:1}}>
-// //                   <div style={{display:'flex',gap:8,alignItems:'center',marginBottom:6}}>
-// //                     <Badge label={a.priority} color={priorityColor[a.priority]} />
-// //                     {(a.audience||[]).map(aud=><Badge key={aud} label={aud} color={C.accent} />)}
-// //                   </div>
-// //                   <div style={{fontSize:14,fontWeight:700,color:C.text}}>{a.title}</div>
-// //                   <div style={{fontSize:12,color:C.muted,marginTop:6,lineHeight:1.6}}>{a.content}</div>
-// //                   <div style={{fontSize:11,color:C.faint,marginTop:8}}>Posted by {a.postedBy?.name} · {new Date(a.createdAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}</div>
-// //                 </div>
-// //                 <DangerBtn small onClick={()=>del(a._id)}>Delete</DangerBtn>
-// //               </div>
-// //             </Card>
-// //           ))}
-// //         </div>
-// //       </LoadState>
-// //       <Modal open={modal} onClose={()=>setModal(false)} title="Post Announcement">
-// //         <FormGroup label="Title"><input value={form.title} onChange={e=>setForm(f=>({...f,title:e.target.value}))} placeholder="Announcement title" /></FormGroup>
-// //         <FormGroup label="Content"><textarea value={form.content} onChange={e=>setForm(f=>({...f,content:e.target.value}))} rows={4} placeholder="Write your announcement…" style={{resize:'vertical'}} /></FormGroup>
-// //         <FormGroup label="Priority"><select value={form.priority} onChange={e=>setForm(f=>({...f,priority:e.target.value}))}>{['Normal','Important','Urgent'].map(p=><option key={p}>{p}</option>)}</select></FormGroup>
-// //         <FormGroup label="Audience (comma-separated)"><input value={(form.audience||[]).join(',')} onChange={e=>setForm(f=>({...f,audience:e.target.value.split(',').map(s=>s.trim())}))} placeholder="All,Teacher,Student" /></FormGroup>
-// //         <div style={{display:'flex',gap:10,marginTop:8}}>
-// //           <Btn onClick={save} disabled={saving}>{saving?'Posting…':'Post'}</Btn>
-// //           <Btn onClick={()=>setModal(false)} color={C.muted} dim={C.alt}>Cancel</Btn>
-// //         </div>
-// //       </Modal>
-// //     </PageWrap>
-// //   );
-// // }
-
-// // // ════════════════════════════════════════════════════════════════
-// // // 11. TRANSPORT PAGE
-// // // ════════════════════════════════════════════════════════════════
-// // export function TransportPage() {
-// //   const token = useToken();
-// //   const { data:routes, loading, error, reload } = useFetch('/transport/routes');
-// //   const { data:assigns } = useFetch('/transport/assignments');
-// //   const [tab, setTab] = useState('routes');
-// //   const [modal, setModal] = useState(false);
-// //   const [form, setForm] = useState({ routeNo:'', name:'', driverName:'', driverPhone:'', vehicleNo:'', vehicleModel:'', capacity:50 });
-// //   const [saving, setSaving] = useState(false);
-
-// //   const save=async()=>{
-// //     setSaving(true);
-// //     await call(token,'POST','/transport/routes',{
-// //       routeNo:form.routeNo, name:form.name,
-// //       driver:{name:form.driverName,phone:form.driverPhone},
-// //       vehicle:{number:form.vehicleNo,model:form.vehicleModel,capacity:+form.capacity},
-// //     });
-// //     setSaving(false);setModal(false);reload();
-// //   };
-
-// //   return (
-// //     <PageWrap>
-// //       <PageHeader title="Transport" subtitle="Manage school bus routes and assignments" action={tab==='routes'&&<Btn onClick={()=>setModal(true)}>+ Add Route</Btn>} />
-// //       <div style={{display:'flex',gap:8,marginBottom:16}}>
-// //         {['routes','assignments'].map(t=>(
-// //           <button key={t} onClick={()=>setTab(t)} style={{padding:'7px 18px',borderRadius:8,fontSize:12,fontWeight:700,cursor:'pointer',background:tab===t?C.accentDim:C.surface,border:`1px solid ${tab===t?C.accent:C.border}`,color:tab===t?C.accent:C.muted,textTransform:'capitalize'}}>{t==='routes'?'🚌 Routes':'👥 Assignments'}</button>
-// //         ))}
-// //       </div>
-// //       {tab==='routes'&&(
-// //         <LoadState loading={loading} error={error} empty={!(routes||[]).length}>
-// //           <div style={{display:'flex',flexDirection:'column',gap:12}}>
-// //             {(routes||[]).map(r=>(
-// //               <Card key={r._id}>
-// //                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
-// //                   <div>
-// //                     <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:6}}>
-// //                       <Badge label={r.routeNo} color={C.accent} />
-// //                       <span style={{fontFamily:"'Syne',sans-serif",fontSize:15,fontWeight:800,color:C.text}}>{r.name}</span>
-// //                     </div>
-// //                     <div style={{fontSize:12,color:C.muted}}>Driver: {r.driver?.name} · {r.driver?.phone}</div>
-// //                     <div style={{fontSize:12,color:C.muted}}>Vehicle: {r.vehicle?.number} ({r.vehicle?.model}) · {r.vehicle?.capacity} seats</div>
-// //                   </div>
-// //                 </div>
-// //                 <div style={{marginTop:10,display:'flex',flexWrap:'wrap',gap:6}}>
-// //                   {(r.stops||[]).map((s,i)=>(
-// //                     <div key={i} style={{fontSize:11,padding:'3px 10px',borderRadius:20,background:C.alt,border:`1px solid ${C.border}`,color:C.text}}>
-// //                       {s.stop} · {s.time} · ₹{s.fare}
-// //                     </div>
-// //                   ))}
-// //                 </div>
-// //               </Card>
-// //             ))}
-// //           </div>
-// //         </LoadState>
-// //       )}
-// //       {tab==='assignments'&&(
-// //         <Card>
-// //           <Table keyFn={r=>r._id} rows={assigns||[]} cols={[
-// //             { label:'Student', render:r=><div><div style={{fontWeight:600}}>{r.student?.name}</div><div style={{fontSize:11,color:C.muted}}>Class {r.student?.standard}{r.student?.section}</div></div> },
-// //             { label:'Route', render:r=>`${r.route?.routeNo} · ${r.route?.name}` },
-// //             { label:'Stop', key:'stop' },
-// //             { label:'Fare', render:r=>`₹${r.fare}` },
-// //           ]} />
-// //         </Card>
-// //       )}
-// //       <Modal open={modal} onClose={()=>setModal(false)} title="Add Transport Route">
-// //         {[['routeNo','Route No'],['name','Route Name'],['driverName','Driver Name'],['driverPhone','Driver Phone'],['vehicleNo','Vehicle Number'],['vehicleModel','Vehicle Model'],['capacity','Capacity']].map(([k,l])=>(
-// //           <FormGroup key={k} label={l}><input value={form[k]||''} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} placeholder={l} /></FormGroup>
-// //         ))}
-// //         <div style={{display:'flex',gap:10,marginTop:8}}>
-// //           <Btn onClick={save} disabled={saving}>{saving?'Saving…':'Create Route'}</Btn>
-// //           <Btn onClick={()=>setModal(false)} color={C.muted} dim={C.alt}>Cancel</Btn>
-// //         </div>
-// //       </Modal>
-// //     </PageWrap>
-// //   );
-// // }
-
-// // // ════════════════════════════════════════════════════════════════
-// // // 12. LEAVE MANAGEMENT PAGE
-// // // ════════════════════════════════════════════════════════════════
-// // export function LeavePage() {
-// //   const token = useToken();
-// //   const [statusFilt, setStatusFilt] = useState('Pending');
-// //   const { data:leaves, loading, error, reload } = useFetch(`/leaves?${statusFilt?`status=${statusFilt}`:''}`, [statusFilt]);
-// //   const [processing, setProcessing] = useState({});
-
-// //   const review=async(id,status)=>{
-// //     setProcessing(p=>({...p,[id]:status}));
-// //     await call(token,'PUT',`/leaves/${id}`,{status});
-// //     setProcessing(p=>{const n={...p};delete n[id];return n;});
-// //     reload();
-// //   };
-
-// //   const statusColor={'Pending':C.warning,'Approved':C.success,'Rejected':C.danger};
-
-// //   return (
-// //     <PageWrap>
-// //       <PageHeader title="Leave Management" subtitle="Review and approve leave requests" />
-// //       <div style={{display:'flex',gap:8,marginBottom:16}}>
-// //         {['','Pending','Approved','Rejected'].map(s=>(
-// //           <button key={s} onClick={()=>setStatusFilt(s)} style={{padding:'6px 14px',borderRadius:20,fontSize:12,fontWeight:700,cursor:'pointer',background:statusFilt===s?C.accentDim:C.surface,border:`1px solid ${statusFilt===s?C.accent:C.border}`,color:statusFilt===s?C.accent:C.muted,transition:'all .15s'}}>
-// //             {s||'All'}
-// //           </button>
-// //         ))}
-// //       </div>
-// //       <LoadState loading={loading} error={error} empty={!(leaves||[]).length}>
-// //         <div style={{display:'flex',flexDirection:'column',gap:10}}>
-// //           {(leaves||[]).map(l=>(
-// //             <Card key={l._id}>
-// //               <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',gap:12}}>
-// //                 <div style={{flex:1}}>
-// //                   <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
-// //                     <div style={{width:32,height:32,borderRadius:'50%',background:C.purpleDim,display:'flex',alignItems:'center',justifyContent:'center',color:C.purple,fontWeight:700,fontSize:13}}>{l.applicant?.name?.charAt(0)}</div>
-// //                     <div>
-// //                       <div style={{fontSize:13,fontWeight:700,color:C.text}}>{l.applicant?.name}</div>
-// //                       <div style={{fontSize:11,color:C.muted}}>{l.role} · {l.type} Leave</div>
-// //                     </div>
-// //                   </div>
-// //                   <div style={{fontSize:12,color:C.muted}}>
-// //                     {new Date(l.from).toLocaleDateString('en-IN')} – {new Date(l.to).toLocaleDateString('en-IN')} · {l.days} day{l.days!==1?'s':''}
-// //                   </div>
-// //                   <div style={{fontSize:12,color:C.text,marginTop:6,fontStyle:'italic'}}>"{l.reason}"</div>
-// //                 </div>
-// //                 <div style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:8}}>
-// //                   <Badge label={l.status} color={statusColor[l.status]} />
-// //                   {l.status==='Pending'&&(
-// //                     <div style={{display:'flex',gap:6}}>
-// //                       <SuccessBtn small onClick={()=>review(l._id,'Approved')} disabled={!!processing[l._id]}>{processing[l._id]==='Approved'?'…':'Approve'}</SuccessBtn>
-// //                       <DangerBtn  small onClick={()=>review(l._id,'Rejected')} disabled={!!processing[l._id]}>{processing[l._id]==='Rejected'?'…':'Reject'}</DangerBtn>
-// //                     </div>
-// //                   )}
-// //                 </div>
-// //               </div>
-// //             </Card>
-// //           ))}
-// //         </div>
-// //       </LoadState>
-// //     </PageWrap>
-// //   );
-// // }
-
-// // // ════════════════════════════════════════════════════════════════
-// // // 13. PAYROLL PAGE
-// // // ════════════════════════════════════════════════════════════════
-// // export function PayrollPage() {
-// //   const token = useToken();
-// //   const [month, setMonth] = useState(new Date().toISOString().slice(0,7));
-// //   const { data:records, loading, error, reload } = useFetch(`/payroll?month=${month}`, [month]);
-// //   const [generating, setGenerating] = useState(false);
-
-// //   const generate=async()=>{
-// //     setGenerating(true);
-// //     await call(token,'POST','/payroll/generate',{month});
-// //     setGenerating(false);reload();
-// //   };
-
-// //   const markPaid=async(id)=>{
-// //     await call(token,'PUT',`/payroll/${id}/pay`);
-// //     reload();
-// //   };
-
-// //   const total = (records||[]).reduce((s,r)=>s+r.netSalary,0);
-// //   const paid  = (records||[]).filter(r=>r.status==='Paid').reduce((s,r)=>s+r.netSalary,0);
-
-// //   return (
-// //     <PageWrap>
-// //       <PageHeader title="Payroll" subtitle="Manage staff salaries" action={
-// //         <div style={{display:'flex',gap:10}}>
-// //           <input type="month" value={month} onChange={e=>setMonth(e.target.value)} />
-// //           <Btn onClick={generate} disabled={generating}>{generating?'Generating…':'Generate Payroll'}</Btn>
-// //         </div>
-// //       } />
-// //       <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(180px,1fr))',gap:12,marginBottom:20}}>
-// //         <StatCard label="Total Payroll" value={`₹${(total/1000).toFixed(0)}K`} color={C.accent} icon="◆" />
-// //         <StatCard label="Paid Out" value={`₹${(paid/1000).toFixed(0)}K`} color={C.success} icon="✓" />
-// //         <StatCard label="Pending" value={(records||[]).filter(r=>r.status==='Pending').length} color={C.warning} icon="⏾" />
-// //         <StatCard label="Total Staff" value={(records||[]).length} color={C.purple} icon="◍" />
-// //       </div>
-// //       <Card>
-// //         <LoadState loading={loading} error={error} empty={!(records||[]).length}>
-// //           <Table keyFn={r=>r._id} rows={records||[]} cols={[
-// //             { label:'Teacher', render:r=><div><div style={{fontWeight:600}}>{r.teacher?.name}</div><div style={{fontSize:11,color:C.muted}}>{r.teacher?.designation} · {r.teacher?.department}</div></div> },
-// //             { label:'Basic', render:r=>`₹${r.basicSalary?.toLocaleString()}` },
-// //             { label:'Allowances', render:r=>`+₹${r.allowances?.toLocaleString()}` },
-// //             { label:'Deductions', render:r=><span style={{color:C.danger}}>-₹{r.deductions?.toLocaleString()}</span> },
-// //             { label:'Net Salary', render:r=><span style={{fontWeight:700,color:C.success}}>₹{r.netSalary?.toLocaleString()}</span> },
-// //             { label:'Status', render:r=><Badge label={r.status} color={r.status==='Paid'?C.success:C.warning} /> },
-// //             { label:'Action', center:true, render:r=>r.status==='Pending'?<SuccessBtn small onClick={()=>markPaid(r._id)}>Pay</SuccessBtn>:<span style={{fontSize:11,color:C.success}}>✓ Paid</span> },
-// //           ]} />
-// //         </LoadState>
-// //       </Card>
-// //     </PageWrap>
-// //   );
-// // }
-
-// // // ════════════════════════════════════════════════════════════════
-// // // 14. ACTIVITY LOGS PAGE
-// // // ════════════════════════════════════════════════════════════════
-// // export function ActivityLogsPage() {
-// //   const [module, setModule] = useState('');
-// //   const { data, loading, error } = useFetch(`/logs?${module?`module=${module}`:''}`, [module]);
-// //   const logs = data?.logs || [];
-
-// //   const MODULES = ['','Registrations','Students','Teachers','Attendance','Exams','Fees','Leave','Payroll','Auth'];
-// //   const modColor = { Auth:C.accent, Students:C.purple, Teachers:C.success, Fees:C.orange, Exams:C.danger, Leave:C.warning, Payroll:C.purple, Registrations:C.accent };
-
-// //   return (
-// //     <PageWrap>
-// //       <PageHeader title="Activity Logs" subtitle="System-wide audit trail" />
-// //       <select value={module} onChange={e=>setModule(e.target.value)} style={{marginBottom:16,width:200}}>
-// //         {MODULES.map(m=><option key={m} value={m}>{m||'All Modules'}</option>)}
-// //       </select>
-// //       <Card>
-// //         <LoadState loading={loading} error={error} empty={!logs.length}>
-// //           <div style={{display:'flex',flexDirection:'column',gap:0}}>
-// //             {logs.map((l,i)=>(
-// //               <div key={l._id} style={{display:'flex',gap:14,padding:'10px 4px',borderBottom:i<logs.length-1?`1px solid ${C.border}`:'none',alignItems:'flex-start'}}>
-// //                 <div style={{width:8,height:8,borderRadius:'50%',background:modColor[l.module]||C.muted,marginTop:5,flexShrink:0,boxShadow:`0 0 6px ${modColor[l.module]||C.muted}80`}} />
-// //                 <div style={{flex:1}}>
-// //                   <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:2}}>
-// //                     <span style={{fontSize:12,fontWeight:700,color:C.text}}>{l.action}</span>
-// //                     {l.module&&<Badge label={l.module} color={modColor[l.module]||C.muted} />}
-// //                   </div>
-// //                   <div style={{fontSize:11,color:C.muted}}>{l.details}</div>
-// //                 </div>
-// //                 <div style={{textAlign:'right',flexShrink:0}}>
-// //                   <div style={{fontSize:11,color:C.text}}>{l.user?.name}</div>
-// //                   <div style={{fontSize:10,color:C.faint}}>{new Date(l.createdAt).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
-// //                 </div>
-// //               </div>
-// //             ))}
-// //           </div>
-// //         </LoadState>
-// //       </Card>
-// //     </PageWrap>
-// //   );
-// // }
-
-// // // ════════════════════════════════════════════════════════════════
-// // // 15. TALENT TESTS PAGE
-// // // ════════════════════════════════════════════════════════════════
-// // export function TalentTestsPage() {
-// //   const token = useToken();
-// //   const { data:tests, loading, error, reload } = useFetch('/talent');
-// //   const [modal, setModal] = useState(false);
-// //   const [detail, setDetail] = useState(null);
-// //   const [form, setForm] = useState({ title:'', standard:'10', subject:'', duration:60, date:'' });
-// //   const [questions, setQuestions] = useState([{ question:'', options:['','','',''], answer:0, marks:1 }]);
-// //   const [saving, setSaving] = useState(false);
-
-// //   const addQ=()=>setQuestions(q=>[...q,{question:'',options:['','','',''],answer:0,marks:1}]);
-// //   const updateQ=(i,k,v)=>setQuestions(q=>q.map((x,j)=>j===i?{...x,[k]:v}:x));
-// //   const updateOpt=(qi,oi,v)=>setQuestions(q=>q.map((x,j)=>j===qi?{...x,options:x.options.map((o,k)=>k===oi?v:o)}:x));
-
-// //   const save=async()=>{
-// //     setSaving(true);
-// //     await call(token,'POST','/talent',{...form,questions});
-// //     setSaving(false);setModal(false);reload();
-// //   };
-
-// //   return (
-// //     <PageWrap>
-// //       <PageHeader title="Talent Tests" subtitle="Create and manage aptitude tests" action={<Btn onClick={()=>setModal(true)}>+ Create Test</Btn>} />
-// //       <LoadState loading={loading} error={error} empty={!(tests||[]).length}>
-// //         <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))',gap:14}}>
-// //           {(tests||[]).map(t=>(
-// //             <Card key={t._id} style={{cursor:'pointer'}} >
-// //               <div style={{fontFamily:"'Syne',sans-serif",fontSize:15,fontWeight:800,color:C.text,marginBottom:6}}>{t.title}</div>
-// //               <div style={{fontSize:12,color:C.muted}}>Class {t.standard} · {t.subject}</div>
-// //               <div style={{fontSize:12,color:C.muted}}>{t.questions?.length||0} questions · {t.duration} min</div>
-// //               {t.date&&<div style={{fontSize:12,color:C.warning,marginTop:6}}>📅 {new Date(t.date).toLocaleDateString('en-IN')}</div>}
-// //               <div style={{marginTop:12}}><Btn small onClick={()=>setDetail(t)}>View Questions</Btn></div>
-// //             </Card>
-// //           ))}
-// //         </div>
-// //       </LoadState>
-// //       <Modal open={modal} onClose={()=>setModal(false)} title="Create Talent Test" width={640}>
-// //         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
-// //           <FormGroup label="Title"><input value={form.title} onChange={e=>setForm(f=>({...f,title:e.target.value}))} /></FormGroup>
-// //           <FormGroup label="Standard"><select value={form.standard} onChange={e=>setForm(f=>({...f,standard:e.target.value}))}>{['6','7','8','9','10'].map(s=><option key={s} value={s}>Class {s}</option>)}</select></FormGroup>
-// //           <FormGroup label="Subject"><input value={form.subject} onChange={e=>setForm(f=>({...f,subject:e.target.value}))} /></FormGroup>
-// //           <FormGroup label="Duration (min)"><input type="number" value={form.duration} onChange={e=>setForm(f=>({...f,duration:+e.target.value}))} /></FormGroup>
-// //         </div>
-// //         <FormGroup label="Date"><input type="datetime-local" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))} /></FormGroup>
-// //         <div style={{borderTop:`1px solid ${C.border}`,marginTop:16,paddingTop:16}}>
-// //           <div style={{fontWeight:700,fontSize:13,color:C.text,marginBottom:12}}>Questions</div>
-// //           {questions.map((q,qi)=>(
-// //             <div key={qi} style={{background:C.alt,borderRadius:10,padding:14,marginBottom:10,border:`1px solid ${C.border}`}}>
-// //               <FormGroup label={`Q${qi+1}`}><input value={q.question} onChange={e=>updateQ(qi,'question',e.target.value)} placeholder="Question text" /></FormGroup>
-// //               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:8}}>
-// //                 {q.options.map((o,oi)=>(
-// //                   <input key={oi} value={o} onChange={e=>updateOpt(qi,oi,e.target.value)} placeholder={`Option ${oi+1}`} />
-// //                 ))}
-// //               </div>
-// //               <div style={{display:'flex',gap:10,alignItems:'center'}}>
-// //                 <span style={{fontSize:11,color:C.muted}}>Correct Answer:</span>
-// //                 <select value={q.answer} onChange={e=>updateQ(qi,'answer',+e.target.value)} style={{width:120}}>
-// //                   {[0,1,2,3].map(i=><option key={i} value={i}>Option {i+1}</option>)}
-// //                 </select>
-// //                 <span style={{fontSize:11,color:C.muted}}>Marks:</span>
-// //                 <input type="number" value={q.marks} onChange={e=>updateQ(qi,'marks',+e.target.value)} style={{width:60}} />
-// //               </div>
-// //             </div>
-// //           ))}
-// //           <Btn small onClick={addQ}>+ Add Question</Btn>
-// //         </div>
-// //         <div style={{display:'flex',gap:10,marginTop:16}}>
-// //           <Btn onClick={save} disabled={saving}>{saving?'Saving…':'Create Test'}</Btn>
-// //           <Btn onClick={()=>setModal(false)} color={C.muted} dim={C.alt}>Cancel</Btn>
-// //         </div>
-// //       </Modal>
-// //       <Modal open={!!detail} onClose={()=>setDetail(null)} title={detail?.title||''} width={580}>
-// //         {detail&&(detail.questions||[]).map((q,i)=>(
-// //           <div key={i} style={{background:C.alt,borderRadius:10,padding:14,marginBottom:10}}>
-// //             <div style={{fontSize:13,fontWeight:700,color:C.text,marginBottom:8}}>Q{i+1}. {q.question}</div>
-// //             {(q.options||[]).map((o,j)=>(
-// //               <div key={j} style={{fontSize:12,padding:'5px 10px',borderRadius:6,marginBottom:4,background:j===q.answer?C.successDim:C.surface,border:`1px solid ${j===q.answer?C.success:C.border}`,color:j===q.answer?C.success:C.text}}>
-// //                 {j===q.answer?'✓ ':''}{String.fromCharCode(65+j)}. {o}
-// //               </div>
-// //             ))}
-// //             <div style={{fontSize:11,color:C.muted,marginTop:6}}>Marks: {q.marks}</div>
-// //           </div>
-// //         ))}
-// //       </Modal>
-// //     </PageWrap>
-// //   );
-// // }
-
-// // // ════════════════════════════════════════════════════════════════
-// // // 16. REPORTS PAGE
-// // // ════════════════════════════════════════════════════════════════
-// // export function ReportsPage() {
-// //   const { data, loading } = useFetch('/reports/overview');
-
-// //   const classStrength = data?.classStrength||[];
-// //   const gradeDist     = data?.gradeDist||[];
-// //   const feeTrend      = data?.feeTrend||[];
-// //   const maxClass      = Math.max(...classStrength.map(c=>c.count),1);
-// //   const maxFee        = Math.max(...feeTrend.map(f=>f.collected),1);
-// //   const GRADE_COLORS  = {'A+':C.success,'A':C.success,'B+':C.accent,'B':C.accent,'C':C.warning,'F':C.danger};
-
-// //   return (
-// //     <PageWrap>
-// //       <PageHeader title="Reports & Analytics" subtitle="School-wide performance overview" />
-// //       {loading ? <div style={{textAlign:'center',padding:60,color:C.muted}}>Loading…</div> : (
-// //         <div style={{display:'flex',flexDirection:'column',gap:20}}>
-// //           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
-
-// //             {/* Class strength */}
-// //             <Card>
-// //               <div style={{fontFamily:"'Syne',sans-serif",fontSize:14,fontWeight:800,color:C.text,marginBottom:16}}>Class Strength</div>
-// //               <div style={{display:'flex',flexDirection:'column',gap:8}}>
-// //                 {classStrength.slice(0,8).map((c,i)=>(
-// //                   <div key={i} style={{display:'flex',alignItems:'center',gap:10}}>
-// //                     <div style={{width:80,fontSize:11,color:C.muted,flexShrink:0}}>{c.name}</div>
-// //                     <div style={{flex:1,height:8,borderRadius:4,background:C.border,overflow:'hidden'}}>
-// //                       <div style={{height:'100%',width:`${(c.count/maxClass)*100}%`,background:C.accent,borderRadius:4,transition:'width .8s ease'}} />
-// //                     </div>
-// //                     <div style={{width:24,fontSize:12,fontWeight:700,color:C.accent,textAlign:'right'}}>{c.count}</div>
-// //                   </div>
-// //                 ))}
-// //               </div>
-// //             </Card>
-
-// //             {/* Grade distribution */}
-// //             <Card>
-// //               <div style={{fontFamily:"'Syne',sans-serif",fontSize:14,fontWeight:800,color:C.text,marginBottom:16}}>Grade Distribution</div>
-// //               <div style={{display:'flex',alignItems:'flex-end',gap:10,height:120,paddingBottom:20,position:'relative'}}>
-// //                 {gradeDist.map((g,i)=>{
-// //                   const maxG=Math.max(...gradeDist.map(x=>x.count),1);
-// //                   const h=(g.count/maxG)*90;
-// //                   return (
-// //                     <div key={i} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:4}}>
-// //                       <div style={{fontSize:11,fontWeight:700,color:GRADE_COLORS[g._id]||C.muted}}>{g.count}</div>
-// //                       <div style={{width:'100%',height:`${h}px`,background:GRADE_COLORS[g._id]||C.muted,borderRadius:'4px 4px 0 0',opacity:.85,transition:'height .8s ease'}} title={`${g._id}: ${g.count}`} />
-// //                       <div style={{fontSize:11,fontWeight:700,color:GRADE_COLORS[g._id]||C.muted}}>{g._id}</div>
-// //                     </div>
-// //                   );
-// //                 })}
-// //               </div>
-// //             </Card>
-// //           </div>
-
-// //           {/* Fee collection trend */}
-// //           <Card>
-// //             <div style={{fontFamily:"'Syne',sans-serif",fontSize:14,fontWeight:800,color:C.text,marginBottom:16}}>Monthly Fee Collection</div>
-// //             <div style={{display:'flex',alignItems:'flex-end',gap:12,height:120}}>
-// //               {feeTrend.map((f,i)=>{
-// //                 const h=(f.collected/maxFee)*90;
-// //                 return (
-// //                   <div key={i} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:6}}>
-// //                     <div style={{fontSize:10,color:C.success,fontWeight:700}}>₹{(f.collected/1000).toFixed(0)}K</div>
-// //                     <div style={{width:'100%',height:`${h}px`,background:`linear-gradient(180deg,${C.success},#238636)`,borderRadius:'4px 4px 0 0',opacity:.85,transition:'height .8s ease'}} title={`₹${f.collected.toLocaleString()}`} />
-// //                     <div style={{fontSize:10,color:C.muted}}>{f._id}</div>
-// //                   </div>
-// //                 );
-// //               })}
-// //             </div>
-// //           </Card>
-// //         </div>
-// //       )}
-// //     </PageWrap>
-// //   );
-// // }
-
-// // // ════════════════════════════════════════════════════════════════
-// // // DEFAULT EXPORT — named exports only, use as:
-// // // import { StudentsPage, TeachersPage, ... } from './modules'
-// // // ════════════════════════════════════════════════════════════════
-// // export default {};
-
-
-
-
-
-
-
-
-
-// src/pages/modules/index.jsx  — UPGRADED v2
-// Fixes: Payroll UPI/Bank payment, Talent test display, Reports charts,
-//        Transport route creation+display, Announcements post+notify,
-//        Library add+display, Fee add+display, Timetable by class,
-//        Exam schedule+display, Class creation KG-10, Students+Teachers
-//        with photo/house/edit, Houses in student form
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
@@ -3819,28 +2482,179 @@ export function ReportsPage() {
 // ════════════════════════════════════════════════════════════════
 // import { useNavigate } from 'react-router-dom';
 
+// export function AdminDashboardPage() {
+//     const navigate = useNavigate();
+
+//     // Fetch live data from your database endpoints
+//     const { data: stdData, loading: stdL } = useFetch('/students?limit=1');
+//     const { data: tchData, loading: tchL } = useFetch('/teachers?limit=1');
+//     const { data: regData, loading: regL } = useFetch('/registrations?status=Pending');
+//     const { data: feeData, loading: feeL } = useFetch('/fees/summary');
+//     const { data: logData, loading: logL } = useFetch('/logs?limit=6');
+
+//     // Extract counts safely
+//     const totalStudents = stdData?.total || 0;
+//     const totalTeachers = tchData?.total || 0;
+//     const pendingRegs   = regData?.registrations?.length || 0;
+    
+//     // Fee summary
+//     const feeStats = (feeData?.byStatus || []).reduce((acc, s) => ({ ...acc, [s._id]: s }), {});
+//     const collectedFees = feeStats.Paid?.paid || 0;
+//     const pendingCount  = feeStats.Pending?.count || 0;
+    
+//     const recentLogs = logData?.logs || [];
+//     const loading = stdL || tchL || regL || feeL;
+
+//     const MC = { Auth: C.accent, Students: C.purple, Teachers: C.success, Fees: C.orange, Inventory: C.warning, Registrations: C.teal };
+
+//     return (
+//         <PageWrap>
+//             <PageHeader 
+//                 title="Admin Overview" 
+//                 subtitle={loading ? "Syncing live data..." : `Live system data synced at ${new Date().toLocaleTimeString('en-IN')}`} 
+//             />
+
+//             {/* TOP STAT CARDS */}
+//             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 24 }}>
+//                 <Card style={{ padding: '16px 20px', borderBottom: `4px solid ${C.accent}` }}>
+//                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+//                         <div>
+//                             <div style={{ fontSize: 11, color: C.muted, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em' }}>Total Students</div>
+//                             <div style={{ fontSize: 28, fontWeight: 800, color: C.text, marginTop: 4, fontFamily: "'Syne', sans-serif" }}>{stdL ? '...' : totalStudents}</div>
+//                         </div>
+//                         <div style={{ width: 40, height: 40, borderRadius: 10, background: C.accentDim, color: C.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>🎒</div>
+//                     </div>
+//                 </Card>
+
+//                 <Card style={{ padding: '16px 20px', borderBottom: `4px solid ${C.purple}` }}>
+//                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+//                         <div>
+//                             <div style={{ fontSize: 11, color: C.muted, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em' }}>Total Teachers</div>
+//                             <div style={{ fontSize: 28, fontWeight: 800, color: C.text, marginTop: 4, fontFamily: "'Syne', sans-serif" }}>{tchL ? '...' : totalTeachers}</div>
+//                         </div>
+//                         <div style={{ width: 40, height: 40, borderRadius: 10, background: C.purpleDim, color: C.purple, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>📚</div>
+//                     </div>
+//                 </Card>
+
+//                 <Card onClick={() => navigate('/dashboard/admin/registrations')} style={{ padding: '16px 20px', borderBottom: `4px solid ${pendingRegs > 0 ? C.danger : C.success}`, cursor: 'pointer' }}>
+//                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+//                         <div>
+//                             <div style={{ fontSize: 11, color: C.muted, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em' }}>Pending Approvals</div>
+//                             <div style={{ fontSize: 28, fontWeight: 800, color: pendingRegs > 0 ? C.danger : C.success, marginTop: 4, fontFamily: "'Syne', sans-serif" }}>{regL ? '...' : pendingRegs}</div>
+//                         </div>
+//                         <div style={{ width: 40, height: 40, borderRadius: 10, background: (pendingRegs > 0 ? C.dangerDim : C.successDim), color: pendingRegs > 0 ? C.danger : C.success, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>🔔</div>
+//                     </div>
+//                 </Card>
+
+//                 <Card style={{ padding: '16px 20px', borderBottom: `4px solid ${C.success}` }}>
+//                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+//                         <div>
+//                             <div style={{ fontSize: 11, color: C.muted, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em' }}>Fees Collected</div>
+//                             <div style={{ fontSize: 24, fontWeight: 800, color: C.text, marginTop: 8, fontFamily: "'Syne', sans-serif" }}>{feeL ? '...' : `₹${(collectedFees / 100000).toFixed(2)}L`}</div>
+//                         </div>
+//                         <div style={{ width: 40, height: 40, borderRadius: 10, background: C.successDim, color: C.success, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>💰</div>
+//                     </div>
+//                 </Card>
+//             </div>
+
+//             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 20 }}>
+//                 {/* LEFT COLUMN */}
+//                 <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+//                     <Card>
+//                         <div style={{ fontSize: 14, fontWeight: 800, color: C.text, marginBottom: 16, fontFamily: "'Syne', sans-serif" }}>⚡ Quick Actions</div>
+//                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+//                             <button onClick={() => navigate('/dashboard/admin/user-creation')} style={{ padding: '14px', background: C.alt, border: `1px solid ${C.border}`, borderRadius: 10, color: C.text, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, transition: 'all .2s' }} onMouseEnter={e => e.currentTarget.style.borderColor=C.accent} onMouseLeave={e => e.currentTarget.style.borderColor=C.border}>
+//                                 <span style={{ background: C.accentDim, color: C.accent, padding: '6px', borderRadius: 8, fontSize: 16 }}>👤</span> Create New User
+//                             </button>
+//                             <button onClick={() => navigate('/dashboard/admin/fees')} style={{ padding: '14px', background: C.alt, border: `1px solid ${C.border}`, borderRadius: 10, color: C.text, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, transition: 'all .2s' }} onMouseEnter={e => e.currentTarget.style.borderColor=C.success} onMouseLeave={e => e.currentTarget.style.borderColor=C.border}>
+//                                 <span style={{ background: C.successDim, color: C.success, padding: '6px', borderRadius: 8, fontSize: 16 }}>💳</span> Collect Fees
+//                             </button>
+//                             <button onClick={() => navigate('/dashboard/admin/attendance')} style={{ padding: '14px', background: C.alt, border: `1px solid ${C.border}`, borderRadius: 10, color: C.text, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, transition: 'all .2s' }} onMouseEnter={e => e.currentTarget.style.borderColor=C.warning} onMouseLeave={e => e.currentTarget.style.borderColor=C.border}>
+//                                 <span style={{ background: C.warningDim, color: C.warning, padding: '6px', borderRadius: 8, fontSize: 16 }}>📅</span> Mark Attendance
+//                             </button>
+//                             <button onClick={() => navigate('/dashboard/admin/communication')} style={{ padding: '14px', background: C.alt, border: `1px solid ${C.border}`, borderRadius: 10, color: C.text, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, transition: 'all .2s' }} onMouseEnter={e => e.currentTarget.style.borderColor=C.purple} onMouseLeave={e => e.currentTarget.style.borderColor=C.border}>
+//                                 <span style={{ background: C.purpleDim, color: C.purple, padding: '6px', borderRadius: 8, fontSize: 16 }}>📢</span> Post Announcement
+//                             </button>
+//                         </div>
+//                     </Card>
+
+//                     <Card>
+//                         <div style={{ fontSize: 14, fontWeight: 800, color: C.text, marginBottom: 16, fontFamily: "'Syne', sans-serif" }}>💸 Fee Collection Status</div>
+//                         {!feeL && (
+//                             <div>
+//                                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: C.muted, marginBottom: 8 }}>
+//                                     <span>Collection Progress</span>
+//                                     <span style={{ fontWeight: 700, color: C.success }}>{feeStats.Paid?.count || 0} Paid</span>
+//                                 </div>
+//                                 <div style={{ height: 12, background: C.alt, borderRadius: 6, overflow: 'hidden', display: 'flex', border: `1px solid ${C.border}` }}>
+//                                     <div style={{ width: '70%', background: C.success }} title="Paid" />
+//                                     <div style={{ width: '15%', background: C.warning }} title="Partial" />
+//                                     <div style={{ width: '15%', background: C.danger }} title="Overdue" />
+//                                 </div>
+//                                 <div style={{ display: 'flex', gap: 16, marginTop: 16, fontSize: 11, fontWeight: 600 }}>
+//                                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}><div style={{ width: 10, height: 10, borderRadius: 3, background: C.success }}/> Paid</div>
+//                                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}><div style={{ width: 10, height: 10, borderRadius: 3, background: C.warning }}/> Partial</div>
+//                                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}><div style={{ width: 10, height: 10, borderRadius: 3, background: C.danger }}/> Overdue ({pendingCount} students)</div>
+//                                 </div>
+//                             </div>
+//                         )}
+//                     </Card>
+//                 </div>
+
+//                 {/* RIGHT COLUMN */}
+//                 <Card style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+//                     <div style={{ padding: '20px 20px 10px 20px', borderBottom: `1px solid ${C.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+//                         <div style={{ fontSize: 14, fontWeight: 800, color: C.text, fontFamily: "'Syne', sans-serif" }}>Live Activity Log</div>
+//                         <Btn small color={C.muted} dim={C.alt} onClick={() => navigate('/dashboard/admin/logs')}>View All</Btn>
+//                     </div>
+                    
+//                     <div style={{ flex: 1, overflowY: 'auto', padding: 10 }}>
+//                         {logL ? <div style={{ textAlign: 'center', padding: 40, color: C.muted, fontSize: 12 }}>Fetching live logs...</div> 
+//                         : recentLogs.length === 0 ? <div style={{ textAlign: 'center', padding: 40, color: C.muted, fontSize: 12 }}>No recent activity.</div>
+//                         : recentLogs.map((log, i) => (
+//                             <div key={log._id} style={{ display: 'flex', gap: 12, padding: '12px 10px', borderBottom: i < recentLogs.length - 1 ? `1px solid ${C.border}` : 'none', alignItems: 'flex-start', animation: `fadeUp .3s ease ${i * 0.05}s both` }}>
+//                                 <div style={{ width: 8, height: 8, borderRadius: '50%', background: MC[log.module] || C.muted, marginTop: 5, flexShrink: 0, boxShadow: `0 0 8px ${MC[log.module] || C.muted}90` }} />
+//                                 <div>
+//                                     <div style={{ fontSize: 12, fontWeight: 700, color: C.text }}>{log.action}</div>
+//                                     <div style={{ fontSize: 11, color: C.muted, marginTop: 3, lineHeight: 1.4 }}>{log.details}</div>
+//                                     <div style={{ fontSize: 10, color: C.faint, marginTop: 4 }}>
+//                                         {log.user?.name} • {new Date(log.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+//                                     </div>
+//                                 </div>
+//                             </div>
+//                         ))}
+//                     </div>
+//                 </Card>
+//             </div>
+//         </PageWrap>
+//     );
+// }
+
+// ════════════════════════════════════════════════════════════════
+// REALISTIC ADMIN DASHBOARD (CONNECTED TO REAL DB)
+// ════════════════════════════════════════════════════════════════
 export function AdminDashboardPage() {
     const navigate = useNavigate();
 
-    // Fetch live data from your database endpoints
-    const { data: stdData, loading: stdL } = useFetch('/students?limit=1');
-    const { data: tchData, loading: tchL } = useFetch('/teachers?limit=1');
-    const { data: regData, loading: regL } = useFetch('/registrations?status=Pending');
+    // 🚀 1. USE OUR PERFECTED STATS ROUTE! (1 call instead of 5!)
+    const { data: stats, loading: statsL } = useFetch('/dashboard/stats');
+    
+    // 2. Fetch specific details for the UI widgets
     const { data: feeData, loading: feeL } = useFetch('/fees/summary');
     const { data: logData, loading: logL } = useFetch('/logs?limit=6');
 
-    // Extract counts safely
-    const totalStudents = stdData?.total || 0;
-    const totalTeachers = tchData?.total || 0;
-    const pendingRegs   = regData?.registrations?.length || 0;
+    // 3. Extract exact database counts safely!
+    const totalStudents = stats?.totalStudents || 0;
+    const totalTeachers = stats?.totalTeachers || 0;
+    const pendingRegs   = stats?.pendingRegs || 0;
     
     // Fee summary
     const feeStats = (feeData?.byStatus || []).reduce((acc, s) => ({ ...acc, [s._id]: s }), {});
-    const collectedFees = feeStats.Paid?.paid || 0;
+    const collectedFees = stats?.feeCollected || feeStats.Paid?.paid || 0;
     const pendingCount  = feeStats.Pending?.count || 0;
     
     const recentLogs = logData?.logs || [];
-    const loading = stdL || tchL || regL || feeL;
+    const loading = statsL || feeL;
 
     const MC = { Auth: C.accent, Students: C.purple, Teachers: C.success, Fees: C.orange, Inventory: C.warning, Registrations: C.teal };
 
@@ -3853,31 +2667,43 @@ export function AdminDashboardPage() {
 
             {/* TOP STAT CARDS */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 24 }}>
-                <Card style={{ padding: '16px 20px', borderBottom: `4px solid ${C.accent}` }}>
+               {/* TOP STAT CARDS */}
+            {/* <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 24 }}> */}
+                
+                {/* 1. CLICKABLE STUDENTS CARD */}
+                <Card 
+                    onClick={() => navigate('/dashboard/admin/students')} 
+                    style={{ padding: '16px 20px', borderBottom: `4px solid ${C.accent}`, cursor: 'pointer' }}
+                >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                         <div>
                             <div style={{ fontSize: 11, color: C.muted, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em' }}>Total Students</div>
-                            <div style={{ fontSize: 28, fontWeight: 800, color: C.text, marginTop: 4, fontFamily: "'Syne', sans-serif" }}>{stdL ? '...' : totalStudents}</div>
+                            <div style={{ fontSize: 28, fontWeight: 800, color: C.text, marginTop: 4, fontFamily: "'Syne', sans-serif" }}>{statsL ? '...' : totalStudents}</div>
                         </div>
                         <div style={{ width: 40, height: 40, borderRadius: 10, background: C.accentDim, color: C.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>🎒</div>
                     </div>
                 </Card>
 
-                <Card style={{ padding: '16px 20px', borderBottom: `4px solid ${C.purple}` }}>
+                {/* 2. CLICKABLE TEACHERS CARD */}
+                <Card 
+                    onClick={() => navigate('/dashboard/admin/teachers')} 
+                    style={{ padding: '16px 20px', borderBottom: `4px solid ${C.purple}`, cursor: 'pointer' }}
+                >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                         <div>
                             <div style={{ fontSize: 11, color: C.muted, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em' }}>Total Teachers</div>
-                            <div style={{ fontSize: 28, fontWeight: 800, color: C.text, marginTop: 4, fontFamily: "'Syne', sans-serif" }}>{tchL ? '...' : totalTeachers}</div>
+                            <div style={{ fontSize: 28, fontWeight: 800, color: C.text, marginTop: 4, fontFamily: "'Syne', sans-serif" }}>{statsL ? '...' : totalTeachers}</div>
                         </div>
                         <div style={{ width: 40, height: 40, borderRadius: 10, background: C.purpleDim, color: C.purple, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>📚</div>
                     </div>
                 </Card>
 
+                {/* ... (Keep your existing Pending Approvals and Fees cards here) ... */}
                 <Card onClick={() => navigate('/dashboard/admin/registrations')} style={{ padding: '16px 20px', borderBottom: `4px solid ${pendingRegs > 0 ? C.danger : C.success}`, cursor: 'pointer' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                         <div>
                             <div style={{ fontSize: 11, color: C.muted, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em' }}>Pending Approvals</div>
-                            <div style={{ fontSize: 28, fontWeight: 800, color: pendingRegs > 0 ? C.danger : C.success, marginTop: 4, fontFamily: "'Syne', sans-serif" }}>{regL ? '...' : pendingRegs}</div>
+                            <div style={{ fontSize: 28, fontWeight: 800, color: pendingRegs > 0 ? C.danger : C.success, marginTop: 4, fontFamily: "'Syne', sans-serif" }}>{statsL ? '...' : pendingRegs}</div>
                         </div>
                         <div style={{ width: 40, height: 40, borderRadius: 10, background: (pendingRegs > 0 ? C.dangerDim : C.successDim), color: pendingRegs > 0 ? C.danger : C.success, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>🔔</div>
                     </div>
@@ -3887,7 +2713,7 @@ export function AdminDashboardPage() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                         <div>
                             <div style={{ fontSize: 11, color: C.muted, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em' }}>Fees Collected</div>
-                            <div style={{ fontSize: 24, fontWeight: 800, color: C.text, marginTop: 8, fontFamily: "'Syne', sans-serif" }}>{feeL ? '...' : `₹${(collectedFees / 100000).toFixed(2)}L`}</div>
+                            <div style={{ fontSize: 24, fontWeight: 800, color: C.text, marginTop: 8, fontFamily: "'Syne', sans-serif" }}>{statsL ? '...' : `₹${(collectedFees / 100000).toFixed(2)}L`}</div>
                         </div>
                         <div style={{ width: 40, height: 40, borderRadius: 10, background: C.successDim, color: C.success, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>💰</div>
                     </div>
@@ -4075,87 +2901,243 @@ export function AdminDashboardPage() {
 // ════════════════════════════════════════════════════════════════
 // UPDATED: REGISTRATIONS PAGE (With Full Details & Photo View)
 // ════════════════════════════════════════════════════════════════
+// export function RegistrationsPage() {
+//   const token = useToken();
+//   const [statusFilt, setStatusFilt] = useState('Pending');
+//   const { data, loading, error, reload } = useFetch(`/registrations?status=${statusFilt}`, [statusFilt]);
+//   const [viewing, setViewing] = useState(null); 
+//   const [processing, setProcessing] = useState(false);
+//   const { show, Toast } = useToast();
+
+//   const registrations = Array.isArray(data) ? data : (data?.data || data?.registrations || []);
+// // GENERATE FULL DATA WITH PERMANENT REALISTIC PHOTOS
+//   const addTestApplicant = async () => {
+//       setProcessing(true);
+//       const isStudent = Math.random() > 0.5; 
+//       const rnd = Math.floor(Math.random() * 1000);
+      
+//       // Use pravatar.cc to generate a permanent, realistic human face based on the random ID
+//       const permanentPhotoUrl = `https://i.pravatar.cc/150?u=${rnd}`;
+      
+//       let payload = {};
+      
+//       if (isStudent) {
+//           payload = {
+//               name: "Test Student " + rnd,
+//               email: `student${rnd}@school.com`,
+//               mobile: "98765" + String(rnd).padStart(5, '0'),
+//               role: "Student",
+//               rollNo: "STU-" + rnd,
+//               className: "10",
+//               section: ["A", "B", "C", "D"][Math.floor(Math.random() * 4)],
+//               dob: "2010-05-15",
+//               gender: rnd % 2 === 0 ? "Male" : "Female",
+//               fatherName: "Mr. Father " + rnd,
+//               motherName: "Mrs. Mother " + rnd,
+//               house: ["Red House", "Blue House", "Green House", "Yellow House"][Math.floor(Math.random() * 4)],
+//               admissionDate: new Date().toISOString().split('T')[0],
+//               address: `${rnd} Education Lane, Visakhapatnam, AP`,
+//               profilePhotoUrl: permanentPhotoUrl, // 👈 Real Photo Added
+//               status: "Pending"
+//           };
+//       } else {
+//           payload = {
+//               name: "Test Teacher " + rnd,
+//               email: `teacher${rnd}@school.com`,
+//               mobile: "91234" + String(rnd).padStart(5, '0'),
+//               role: "Teacher",
+//               teacherId: "TCH-" + rnd,
+//               department: ["Science", "Mathematics", "Humanities", "Languages"][Math.floor(Math.random() * 4)],
+//               qualification: ["M.Sc, B.Ed", "M.A, Ph.D", "B.Tech, B.Ed"][Math.floor(Math.random() * 3)],
+//               experience: Math.floor(Math.random() * 10) + 1,
+//               joiningDate: new Date().toISOString().split('T')[0],
+//               salary: 35000 + (rnd * 10),
+//               address: `${rnd} Faculty Residency, Visakhapatnam, AP`,
+//               profilePhotoUrl: permanentPhotoUrl, // 👈 Real Photo Added
+//               status: "Pending"
+//           };
+//       }
+
+//       try {
+//           const res = await call(token, 'POST', '/registrations', payload);
+//           if (res.success) {
+//               show(`${payload.role} Applicant saved to DB!`, true);
+//               reload();
+//           } else {
+//               show(`Database Error: ${res.message}`, false);
+//           }
+//       } catch (err) {
+//           show(`Network Error: Backend offline or route missing`, false);
+//       }
+//       setProcessing(false);
+//   };
+//   const handleAction = async (id, action) => {
+//     setProcessing(true);
+//     try {
+//         const r = await call(token, 'PUT', `/registrations/${id}/${action}`);
+//         if (r.success) {
+//             show(`Registration ${action}d successfully!`);
+//         } else {
+//             show(`Action recorded locally (Backend API missing)`, action === 'approve');
+//         }
+//     } catch(err) {
+//         show(`Action recorded locally (Backend API missing)`, action === 'approve');
+//     }
+//     setProcessing(false);
+//     setViewing(null); 
+//     reload();
+//   };
+
+//   const lblStyle = { fontSize: 11, color: C.muted, fontWeight: 700, textTransform: 'uppercase', marginBottom: 4 };
+//   const valStyle = { fontSize: 14, color: C.text, fontWeight: 500 };
+
+//   return (
+//     <PageWrap>
+//       <Toast />
+//       {/* <PageHeader title="Pending Registrations" subtitle="Review incoming student and teacher profiles" /> */}
+//       <PageHeader 
+//   title="Pending Registrations" 
+//   subtitle="Review incoming student and teacher profiles" 
+//   action={<Btn onClick={addTestApplicant} color={C.purple} dim={C.purpleDim} disabled={processing}>{processing ? 'Adding...' : '+ Add Test Applicant'}</Btn>}
+// />
+//       <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+//         {['Pending', 'Approved', 'Rejected', ''].map(s => (
+//           <button key={s} onClick={() => setStatusFilt(s)} style={{ padding: '6px 14px', borderRadius: 20, fontSize: 12, fontWeight: 700, cursor: 'pointer', background: statusFilt === s ? C.accentDim : C.surface, border: `1px solid ${statusFilt === s ? C.accent : C.border}`, color: statusFilt === s ? C.accent : C.muted, transition: 'all .15s' }}>
+//             {s || 'All'}
+//           </button>
+//         ))}
+//       </div>
+      
+//       <Card>
+//         <LoadState loading={loading} error={null} empty={!registrations.length}>
+//           <Table keyFn={r => r._id} rows={registrations} cols={[
+//             { label: 'User', render: r => (
+//                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+//                   <div style={{ width: 34, height: 34, borderRadius: '50%', background: getRoleColor(r.role)+'22', border: `1px solid ${getRoleColor(r.role)}55`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: getRoleColor(r.role), fontWeight: 700, fontSize: 13, flexShrink: 0, overflow: 'hidden' }}>
+//                       {r.profilePhotoUrl ? <img src={r.profilePhotoUrl} alt="DP" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : r.name?.charAt(0)}
+//                   </div>
+//                   <div><div style={{ fontWeight: 600 }}>{r.name}</div><div style={{ fontSize: 11, color: C.muted }}>{r.email}</div></div>
+//                 </div>
+//               ) 
+//             },
+//             { label: 'Role', render: r => <Badge label={r.role} color={getRoleColor(r.role)} /> },
+//             { label: 'Date', render: r => new Date(r.createdAt || Date.now()).toLocaleDateString('en-IN') },
+//             { label: 'Status', render: r => <Badge label={r.status} color={r.status === 'Approved' ? C.success : r.status === 'Rejected' ? C.danger : C.warning} /> },
+//             { label: 'Actions', center: true, render: r => (
+//                 <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
+//                   <Btn small onClick={() => setViewing(r)} color={C.accent} dim={C.accentDim}>👁 View Details</Btn>
+//                   {r.status === 'Pending' && (
+//                     <>
+//                       <SuccessBtn small onClick={() => handleAction(r._id, 'approve')}>✓</SuccessBtn>
+//                       <DangerBtn small onClick={() => handleAction(r._id, 'reject')}>✕</DangerBtn>
+//                     </>
+//                   )}
+//                 </div>
+//               )
+//             },
+//           ]} />
+//         </LoadState>
+//       </Card>
+
+//       {/* VIEW DETAILS MODAL */}
+//       <Modal open={!!viewing} onClose={() => setViewing(null)} title="Registration Details" width={650}>
+//         {viewing && (
+//           <div>
+//             {/* Header / Photo */}
+//             <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20, paddingBottom: 16, borderBottom: `1px solid ${C.border}` }}>
+//               <div style={{ width: 64, height: 64, borderRadius: '50%', background: getRoleColor(viewing.role)+'22', color: getRoleColor(viewing.role), display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, fontWeight: 800, border: `2px solid ${getRoleColor(viewing.role)}55`, overflow: 'hidden' }}>
+//                 {viewing.profilePhotoUrl ? <img src={viewing.profilePhotoUrl} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : viewing.name?.charAt(0)}
+//               </div>
+//               <div>
+//                   <div style={{ fontSize: 20, fontWeight: 800, color: C.text, fontFamily: "'Syne', sans-serif" }}>{viewing.name}</div>
+//                   <div style={{ fontSize: 13, color: C.muted, marginTop: 4 }}>Applying for: <strong style={{ color: getRoleColor(viewing.role) }}>{viewing.role}</strong></div>
+//               </div>
+//               <div style={{ marginLeft: 'auto' }}><Badge label={viewing.status} color={viewing.status === 'Approved' ? C.success : viewing.status === 'Rejected' ? C.danger : C.warning} /></div>
+//             </div>
+
+//             {/* Core Info */}
+//             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
+//               <div><div style={lblStyle}>Email Address</div><div style={valStyle}>{viewing.email || '—'}</div></div>
+//               <div><div style={lblStyle}>Mobile Number</div><div style={valStyle}>{viewing.mobile || viewing.phone || '—'}</div></div>
+              
+//               {/* Student Specific Fields */}
+//               {viewing.role === 'Student' && (
+//                 <>
+//                   <div><div style={lblStyle}>Student ID / Roll No</div><div style={valStyle}>{viewing.rollNo || viewing.studentId || '—'}</div></div>
+//                   <div><div style={lblStyle}>Class & Section</div><div style={valStyle}>{viewing.className || viewing.standard || '—'} {viewing.section || ''}</div></div>
+//                   <div><div style={lblStyle}>Date of Birth</div><div style={valStyle}>{viewing.dob ? new Date(viewing.dob).toLocaleDateString() : '—'}</div></div>
+//                   <div><div style={lblStyle}>Gender</div><div style={valStyle}>{viewing.gender || '—'}</div></div>
+//                   <div><div style={lblStyle}>Father's Name</div><div style={valStyle}>{viewing.fatherName || '—'}</div></div>
+//                   <div><div style={lblStyle}>Mother's Name</div><div style={valStyle}>{viewing.motherName || '—'}</div></div>
+//                   <div><div style={lblStyle}>House</div><div style={valStyle}>{viewing.house || '—'}</div></div>
+//                   <div><div style={lblStyle}>Admission Date</div><div style={valStyle}>{viewing.admissionDate ? new Date(viewing.admissionDate).toLocaleDateString() : '—'}</div></div>
+//                 </>
+//               )}
+              
+//               {/* Teacher Specific Fields */}
+//               {viewing.role === 'Teacher' && (
+//                 <>
+//                   <div><div style={lblStyle}>Teacher ID</div><div style={valStyle}>{viewing.teacherId || '—'}</div></div>
+//                   <div><div style={lblStyle}>Username</div><div style={valStyle}>{viewing.username || '—'}</div></div>
+//                   <div><div style={lblStyle}>Department</div><div style={valStyle}>{viewing.department || '—'}</div></div>
+//                   <div><div style={lblStyle}>Qualification</div><div style={valStyle}>{viewing.qualification || '—'}</div></div>
+//                   <div><div style={lblStyle}>Experience</div><div style={valStyle}>{viewing.experience ? `${viewing.experience} Years` : '—'}</div></div>
+//                   <div><div style={lblStyle}>Joining Date</div><div style={valStyle}>{viewing.joiningDate ? new Date(viewing.joiningDate).toLocaleDateString() : '—'}</div></div>
+//                   <div><div style={lblStyle}>Salary</div><div style={valStyle}>{viewing.salary ? `₹${viewing.salary.toLocaleString()}` : '—'}</div></div>
+//                 </>
+//               )}
+
+//               <div style={{ gridColumn: 'span 2' }}>
+//                   <div style={lblStyle}>Full Address</div>
+//                   <div style={{ ...valStyle, background: C.alt, padding: 12, borderRadius: 8, border: `1px solid ${C.border}` }}>
+//                       {viewing.address || 'No address provided.'}
+//                   </div>
+//               </div>
+//             </div>
+            
+//             {/* Action Buttons */}
+//             {viewing.status === 'Pending' && (
+//               <div style={{ display: 'flex', gap: 12, marginTop: 10, paddingTop: 20, borderTop: `1px solid ${C.border}` }}>
+//                 <SuccessBtn onClick={() => handleAction(viewing._id, 'approve')} disabled={processing} style={{ flex: 1, justifyContent: 'center' }}>
+//                     {processing ? 'Processing...' : '✓ Approve Registration'}
+//                 </SuccessBtn>
+//                 <DangerBtn onClick={() => handleAction(viewing._id, 'reject')} disabled={processing} style={{ flex: 1, justifyContent: 'center' }}>
+//                     {processing ? 'Processing...' : '✕ Reject'}
+//                 </DangerBtn>
+//               </div>
+//             )}
+//           </div>
+//         )}
+//       </Modal>
+//     </PageWrap>
+//   );
+// }
+// ════════════════════════════════════════════════════════════════
+// PRODUCTION READY: REGISTRATIONS PAGE (Real users only)
+// ════════════════════════════════════════════════════════════════
 export function RegistrationsPage() {
   const token = useToken();
   const [statusFilt, setStatusFilt] = useState('Pending');
-  const { data, loading, error, reload } = useFetch(`/registrations?status=${statusFilt}`, [statusFilt]);
+  
+  // Fetch from the new /admin/registrations route
+  const { data, loading, error, reload } = useFetch(`/admin/registrations?status=${statusFilt}`, [statusFilt]);
   const [viewing, setViewing] = useState(null); 
   const [processing, setProcessing] = useState(false);
   const { show, Toast } = useToast();
 
   const registrations = Array.isArray(data) ? data : (data?.data || data?.registrations || []);
-// GENERATE FULL DATA WITH PERMANENT REALISTIC PHOTOS
-  const addTestApplicant = async () => {
-      setProcessing(true);
-      const isStudent = Math.random() > 0.5; 
-      const rnd = Math.floor(Math.random() * 1000);
-      
-      // Use pravatar.cc to generate a permanent, realistic human face based on the random ID
-      const permanentPhotoUrl = `https://i.pravatar.cc/150?u=${rnd}`;
-      
-      let payload = {};
-      
-      if (isStudent) {
-          payload = {
-              name: "Test Student " + rnd,
-              email: `student${rnd}@school.com`,
-              mobile: "98765" + String(rnd).padStart(5, '0'),
-              role: "Student",
-              rollNo: "STU-" + rnd,
-              className: "10",
-              section: ["A", "B", "C", "D"][Math.floor(Math.random() * 4)],
-              dob: "2010-05-15",
-              gender: rnd % 2 === 0 ? "Male" : "Female",
-              fatherName: "Mr. Father " + rnd,
-              motherName: "Mrs. Mother " + rnd,
-              house: ["Red House", "Blue House", "Green House", "Yellow House"][Math.floor(Math.random() * 4)],
-              admissionDate: new Date().toISOString().split('T')[0],
-              address: `${rnd} Education Lane, Visakhapatnam, AP`,
-              profilePhotoUrl: permanentPhotoUrl, // 👈 Real Photo Added
-              status: "Pending"
-          };
-      } else {
-          payload = {
-              name: "Test Teacher " + rnd,
-              email: `teacher${rnd}@school.com`,
-              mobile: "91234" + String(rnd).padStart(5, '0'),
-              role: "Teacher",
-              teacherId: "TCH-" + rnd,
-              department: ["Science", "Mathematics", "Humanities", "Languages"][Math.floor(Math.random() * 4)],
-              qualification: ["M.Sc, B.Ed", "M.A, Ph.D", "B.Tech, B.Ed"][Math.floor(Math.random() * 3)],
-              experience: Math.floor(Math.random() * 10) + 1,
-              joiningDate: new Date().toISOString().split('T')[0],
-              salary: 35000 + (rnd * 10),
-              address: `${rnd} Faculty Residency, Visakhapatnam, AP`,
-              profilePhotoUrl: permanentPhotoUrl, // 👈 Real Photo Added
-              status: "Pending"
-          };
-      }
 
-      try {
-          const res = await call(token, 'POST', '/registrations', payload);
-          if (res.success) {
-              show(`${payload.role} Applicant saved to DB!`, true);
-              reload();
-          } else {
-              show(`Database Error: ${res.message}`, false);
-          }
-      } catch (err) {
-          show(`Network Error: Backend offline or route missing`, false);
-      }
-      setProcessing(false);
-  };
   const handleAction = async (id, action) => {
     setProcessing(true);
     try {
-        const r = await call(token, 'PUT', `/registrations/${id}/${action}`);
+        const r = await call(token, 'PUT', `/admin/registrations/${id}/${action}`);
         if (r.success) {
             show(`Registration ${action}d successfully!`);
         } else {
-            show(`Action recorded locally (Backend API missing)`, action === 'approve');
+            show(r.message || 'Action failed', false);
         }
     } catch(err) {
-        show(`Action recorded locally (Backend API missing)`, action === 'approve');
+        show(`Network error occurred`, false);
     }
     setProcessing(false);
     setViewing(null); 
@@ -4168,12 +3150,13 @@ export function RegistrationsPage() {
   return (
     <PageWrap>
       <Toast />
-      {/* <PageHeader title="Pending Registrations" subtitle="Review incoming student and teacher profiles" /> */}
+      
+      {/* 🚀 REMOVED THE FAKE USER BUTTON! Now it just shows the header. */}
       <PageHeader 
-  title="Pending Registrations" 
-  subtitle="Review incoming student and teacher profiles" 
-  action={<Btn onClick={addTestApplicant} color={C.purple} dim={C.purpleDim} disabled={processing}>{processing ? 'Adding...' : '+ Add Test Applicant'}</Btn>}
-/>
+        title="Pending Registrations" 
+        subtitle="Review incoming student and teacher profiles" 
+      />
+      
       <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
         {['Pending', 'Approved', 'Rejected', ''].map(s => (
           <button key={s} onClick={() => setStatusFilt(s)} style={{ padding: '6px 14px', borderRadius: 20, fontSize: 12, fontWeight: 700, cursor: 'pointer', background: statusFilt === s ? C.accentDim : C.surface, border: `1px solid ${statusFilt === s ? C.accent : C.border}`, color: statusFilt === s ? C.accent : C.muted, transition: 'all .15s' }}>
@@ -4405,128 +3388,205 @@ export function RegistrationsPage() {
 // ════════════════════════════════════════════════════════════════
 // UPDATED: USER CREATION PAGE (With Photo Upload for S3 & Exact Fields)
 // ════════════════════════════════════════════════════════════════
+// export function UserCreationPage() {
+//     const token = useToken();
+//     const { show, Toast } = useToast();
+//     const [loading, setLoading] = useState(false);
+//     const [photo, setPhoto] = useState(null); // For the S3 Image Upload
+    
+//     const [formData, setFormData] = useState({
+//         role: 'Student', name: '', email: '', mobile: '', address: '',
+//         // Student Fields
+//         rollNo: '', fatherName: '', motherName: '', dob: '', gender: '', className: '', section: '', admissionDate: '', house: '',
+//         // Teacher Fields
+//         teacherId: '', qualification: '', department: '', experience: '', joiningDate: '', salary: '', username: ''
+//     });
+
+//     const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+
+//     const handleSubmit = async (e) => {
+//         e.preventDefault();
+//         setLoading(true);
+
+//         // We MUST use FormData to send files (images) to the backend for S3
+//         const payload = new FormData();
+        
+//         // Append all text fields based on role
+//         payload.append('role', formData.role);
+//         payload.append('name', formData.name);
+//         payload.append('email', formData.email);
+//         // payload.append('password', formData.password);
+//         payload.append('mobile', formData.mobile);
+//         payload.append('address', formData.address);
+
+//         if (formData.role === 'Student') {
+//             ['rollNo', 'fatherName', 'motherName', 'dob', 'gender', 'className', 'section', 'admissionDate', 'house'].forEach(k => payload.append(k, formData[k]));
+//         } else if (formData.role === 'Teacher') {
+//             ['teacherId', 'qualification', 'department', 'experience', 'joiningDate', 'salary', 'username'].forEach(k => payload.append(k, formData[k]));
+//         }
+
+//         // Append the actual image file
+//         if (photo) {
+//             payload.append('profilePhoto', photo);
+//         }
+
+//         try {
+//             // Using standard fetch here instead of `call()` because we need to send multipart/form-data
+//             const r = await fetch(`${BASE}/auth/register`, {
+//                 method: 'POST',
+//                 headers: { Authorization: `Bearer ${token}` }, // Note: No Content-Type header! Browser sets it automatically for FormData
+//                 body: payload
+//             });
+//             const response = await r.json();
+            
+//             if (response.success || true) { // Keeping the fallback so UI testing works
+//                 show(`${formData.role} created successfully!`, true);
+//                 setFormData({ role: 'Student', name: '', email: '', password: '', mobile: '', address: '', rollNo: '', fatherName: '', motherName: '', dob: '', gender: '', className: '', section: '', admissionDate: '', house: '', teacherId: '', qualification: '', department: '', experience: '', joiningDate: '', salary: '', username: '' }); 
+//                 setPhoto(null);
 export function UserCreationPage() {
     const token = useToken();
     const { show, Toast } = useToast();
     const [loading, setLoading] = useState(false);
-    const [photo, setPhoto] = useState(null); // For the S3 Image Upload
-    
-    const [formData, setFormData] = useState({
-        role: 'Student', name: '', email: '', password: '', mobile: '', address: '',
-        // Student Fields
-        rollNo: '', fatherName: '', motherName: '', dob: '', gender: '', className: '', section: '', admissionDate: '', house: '',
-        // Teacher Fields
-        teacherId: '', qualification: '', department: '', experience: '', joiningDate: '', salary: '', username: ''
-    });
 
+    // ── Fetch real classes from the database for the dropdown ──────
+    const { data: classesRaw } = useFetch('/classes');
+    const classes = Array.isArray(classesRaw) ? classesRaw : (classesRaw || []);
+
+    const BLANK = {
+        role: 'Student', name: '', email: '', mobile: '', address: '',
+        // Student
+        classId: '', parentName: '', parentPhone: '', dob: '', gender: '',
+        admissionDate: '', house: '', bloodGroup: '',
+        // Teacher
+        teacherId: '', qualification: '', department: '', designation: '',
+        experience: '', joiningDate: '', salary: ''
+    };
+    const [formData, setFormData] = useState(BLANK);
     const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
 
-        // We MUST use FormData to send files (images) to the backend for S3
-        const payload = new FormData();
-        
-        // Append all text fields based on role
-        payload.append('role', formData.role);
-        payload.append('name', formData.name);
-        payload.append('email', formData.email);
-        payload.append('password', formData.password);
-        payload.append('mobile', formData.mobile);
-        payload.append('address', formData.address);
+        // Plain JSON — backend maps mobile → phone field
+        const payload = {
+            role: formData.role,
+            name: formData.name,
+            email: formData.email,
+            mobile: formData.mobile,
+            address: formData.address,
+        };
 
         if (formData.role === 'Student') {
-            ['rollNo', 'fatherName', 'motherName', 'dob', 'gender', 'className', 'section', 'admissionDate', 'house'].forEach(k => payload.append(k, formData[k]));
+            payload.classId       = formData.classId;
+            payload.parentName    = formData.parentName;
+            payload.parentPhone   = formData.parentPhone;
+            payload.gender        = formData.gender;
+            payload.dob           = formData.dob;
+            payload.admissionDate = formData.admissionDate;
+            payload.house         = formData.house;
+            payload.bloodGroup    = formData.bloodGroup;
         } else if (formData.role === 'Teacher') {
-            ['teacherId', 'qualification', 'department', 'experience', 'joiningDate', 'salary', 'username'].forEach(k => payload.append(k, formData[k]));
-        }
-
-        // Append the actual image file
-        if (photo) {
-            payload.append('profilePhoto', photo);
+            payload.teacherId     = formData.teacherId;
+            payload.designation   = formData.designation;
+            payload.department    = formData.department;
+            payload.qualification = formData.qualification;
+            payload.experience    = formData.experience;
+            payload.joiningDate   = formData.joiningDate;
+            payload.salary        = formData.salary;
         }
 
         try {
-            // Using standard fetch here instead of `call()` because we need to send multipart/form-data
-            const r = await fetch(`${BASE}/auth/register`, {
-                method: 'POST',
-                headers: { Authorization: `Bearer ${token}` }, // Note: No Content-Type header! Browser sets it automatically for FormData
-                body: payload
-            });
-            const response = await r.json();
-            
-            if (response.success || true) { // Keeping the fallback so UI testing works
-                show(`${formData.role} created successfully!`, true);
-                setFormData({ role: 'Student', name: '', email: '', password: '', mobile: '', address: '', rollNo: '', fatherName: '', motherName: '', dob: '', gender: '', className: '', section: '', admissionDate: '', house: '', teacherId: '', qualification: '', department: '', experience: '', joiningDate: '', salary: '', username: '' }); 
-                setPhoto(null);
+            const response = await call(token, 'POST', '/auth/register', payload);
+            if (response.success) {
+                show(`✅ ${formData.role} created! Default password: Welcome@123`, true);
+                setFormData(BLANK);
             } else {
                 show(response.message || 'Failed to create user.', false);
             }
-        } catch(err) {
-            show('Failed to connect to backend', false);
+        } catch (err) {
+            show('Failed to connect to backend.', false);
         }
         setLoading(false);
     };
 
-    const renderInput = (name, placeholder, type = "text", required = false, half = true) => (
-        <FG label={`${placeholder} ${required ? '*' : ''}`} half={half}>
-            <input type={type} name={name} value={formData[name] || ''} onChange={handleChange} required={required} placeholder={`Enter ${placeholder}`} />
+    const renderInput = (name, placeholder, type = 'text', required = false, half = true) => (
+        <FG label={`${placeholder}${required ? ' *' : ''}`} half={half}>
+            <input type={type} name={name} value={formData[name] || ''} onChange={handleChange}
+                   required={required} placeholder={`Enter ${placeholder}`} />
         </FG>
     );
+
+    // Combined class label: standard + section e.g. "7A"
+    const classLabel = (cls) => `${cls.standard || ''}${cls.section || ''}`;
 
     return (
         <PageWrap>
             <Toast />
-            <PageHeader title="User Creation" subtitle="Register new students or teachers with full profiles and photos" />
-            <Card style={{ maxWidth: '800px' }}>
+            <PageHeader
+                title="User Creation"
+                subtitle="Register students or teachers permanently — no approval needed"
+            />
+
+            {/* Info notice */}
+            <div style={{ background: C.accentDim, border: `1px solid ${C.accent}44`, borderRadius: 10, padding: '12px 16px', marginBottom: 20, fontSize: 13, color: C.accent, display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ fontSize: 18 }}>ℹ️</span>
+                <span>Accounts are created <strong>immediately</strong> and appear in their respective list. Default password: <strong>Welcome@123</strong>.</span>
+            </div>
+
+            <Card style={{ maxWidth: '820px' }}>
                 <form onSubmit={handleSubmit}>
+
+                    {/* ── Section 1: Basic Info ── */}
                     <div style={{ marginBottom: 24, borderBottom: `1px solid ${C.border}`, paddingBottom: 24 }}>
-                        <div style={{ fontSize: 16, fontWeight: 700, color: C.text, marginBottom: 16 }}>Basic Information</div>
-                        
-                        <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
-                            <div style={{ flex: 1 }}>
-                                <FG label="Sign Up As *">
-                                    <select name="role" required value={formData.role} onChange={handleChange}>
-                                        <option value="Student">Student</option>
-                                        <option value="Teacher">Teacher</option>
-                                    </select>
-                                </FG>
-                                <Row>
-                                    {renderInput('name', 'Full Name', 'text', true)}
-                                    {renderInput('email', 'Email Address', 'email', true)}
-                                </Row>
-                                <Row>
-                                    {renderInput('password', 'Temporary Password', 'password', true)}
-                                    {renderInput('mobile', 'Mobile Number', 'text')}
-                                </Row>
-                            </div>
-                            
-                            {/* Photo Upload Section */}
-                            <div style={{ width: '160px' }}>
-                                <FG label="Profile Photo">
-                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
-                                        <PhotoInput value={photo} onChange={setPhoto} size={90} />
-                                    </div>
-                                </FG>
-                            </div>
+                        <div style={{ fontSize: 15, fontWeight: 700, color: C.text, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{ background: C.accentDim, color: C.accent, borderRadius: '50%', width: 24, height: 24, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800 }}>1</span>
+                            Basic Information
                         </div>
+                        <FG label="Create As *">
+                            <select name="role" required value={formData.role} onChange={handleChange}>
+                                <option value="Student">Student</option>
+                                <option value="Teacher">Teacher</option>
+                            </select>
+                        </FG>
+                        <Row>
+                            {renderInput('name', 'Full Name', 'text', true)}
+                            {renderInput('email', 'Email Address', 'email', true)}
+                        </Row>
+                        <Row>
+                            {renderInput('mobile', 'Mobile Number', 'text')}
+                            {renderInput('address', 'Address', 'text')}
+                        </Row>
                     </div>
 
+                    {/* ── Section 2: Role-specific ── */}
                     <div style={{ marginBottom: 24 }}>
-                        <div style={{ fontSize: 16, fontWeight: 700, color: C.text, marginBottom: 16 }}>{formData.role} Details</div>
-                        
+                        <div style={{ fontSize: 15, fontWeight: 700, color: C.text, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{ background: C.successDim, color: C.success, borderRadius: '50%', width: 24, height: 24, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800 }}>2</span>
+                            {formData.role} Details
+                        </div>
+
                         {formData.role === 'Student' && (
                             <>
                                 <Row>
-                                    {renderInput('rollNo', 'Student ID / Roll No', 'text', true)}
-                                    {renderInput('className', 'Class', 'text', true)}
-                                </Row>
-                                <Row>
-                                    {renderInput('section', 'Section')}
+                                    {/* ── CLASS DROPDOWN — reads from /classes API ── */}
+                                    <FG label="Class & Section *" half>
+                                        <select name="classId" value={formData.classId} onChange={handleChange} required>
+                                            <option value="">— Select Class —</option>
+                                            {classes.map(cls => (
+                                                <option key={cls._id} value={cls._id}>
+                                                    {classLabel(cls)} — {cls.name || `Class ${cls.standard}${cls.section}`}
+                                                </option>
+                                            ))}
+                                            {classes.length === 0 && <option disabled>No classes found. Create classes first.</option>}
+                                        </select>
+                                    </FG>
                                     <FG label="Gender *" half>
                                         <select name="gender" value={formData.gender} onChange={handleChange} required>
-                                            <option value="">Select Gender</option><option value="Male">Male</option><option value="Female">Female</option>
+                                            <option value="">Select Gender</option>
+                                            <option value="Male">Male</option>
+                                            <option value="Female">Female</option>
+                                            <option value="Other">Other</option>
                                         </select>
                                     </FG>
                                 </Row>
@@ -4535,26 +3595,34 @@ export function UserCreationPage() {
                                     {renderInput('admissionDate', 'Admission Date', 'date')}
                                 </Row>
                                 <Row>
-                                    {renderInput('fatherName', 'Father Name')}
-                                    {renderInput('motherName', 'Mother Name')}
+                                    {renderInput('parentName', 'Parent / Guardian Name')}
+                                    {renderInput('parentPhone', 'Parent Phone', 'text')}
                                 </Row>
-                                <FG label="House">
-                                    <HouseSelector value={formData.house} onChange={v => setFormData({...formData, house: v})} />
-                                </FG>
-                                <FG label="Full Address">
-                                    <textarea name="address" value={formData.address} onChange={handleChange} rows="2" placeholder="Student's residential address" />
-                                </FG>
+                                <Row>
+                                    <FG label="Blood Group" half>
+                                        <select name="bloodGroup" value={formData.bloodGroup} onChange={handleChange}>
+                                            <option value="">— Select —</option>
+                                            {['A+','A-','B+','B-','O+','O-','AB+','AB-'].map(bg => <option key={bg}>{bg}</option>)}
+                                        </select>
+                                    </FG>
+                                    <FG label="House" half>
+                                        <select name="house" value={formData.house} onChange={handleChange}>
+                                            <option value="">— Select House —</option>
+                                            {HOUSES.map(h => <option key={h.name} value={h.name}>{h.emoji} {h.name}</option>)}
+                                        </select>
+                                    </FG>
+                                </Row>
                             </>
                         )}
 
                         {formData.role === 'Teacher' && (
                             <>
                                 <Row>
-                                    {renderInput('teacherId', 'Teacher ID', 'text', true)}
-                                    {renderInput('username', 'Username', 'text', true)}
+                                    {renderInput('teacherId', 'Teacher ID (auto if blank)', 'text')}
+                                    {renderInput('designation', 'Designation', 'text')}
                                 </Row>
                                 <Row>
-                                    {renderInput('department', 'Subject / Department', 'text', true)}
+                                    {renderInput('department', 'Department / Subject', 'text', true)}
                                     {renderInput('qualification', 'Qualification')}
                                 </Row>
                                 <Row>
@@ -4562,22 +3630,28 @@ export function UserCreationPage() {
                                     {renderInput('joiningDate', 'Date of Joining', 'date')}
                                 </Row>
                                 <Row>
-                                    {renderInput('salary', 'Salary (Optional)', 'number')}
+                                    {renderInput('salary', 'Salary (₹)', 'number')}
                                 </Row>
-                                <FG label="Full Address">
-                                    <textarea name="address" value={formData.address} onChange={handleChange} rows="2" placeholder="Teacher's residential address" />
-                                </FG>
                             </>
                         )}
                     </div>
+
+                    {/* Password notice */}
+                    <div style={{ background: C.warningDim, border: `1px solid ${C.warning}44`, borderRadius: 8, padding: '10px 14px', marginBottom: 20, fontSize: 12, color: C.warning }}>
+                        🔑 Default password: <strong>Welcome@123</strong> — user should change it on first login.
+                    </div>
+
                     <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: 16, borderTop: `1px solid ${C.border}` }}>
-                        <SuccessBtn disabled={loading}>{loading ? 'Creating...' : `Create ${formData.role} Account`}</SuccessBtn>
+                        <SuccessBtn disabled={loading} type="submit">
+                            {loading ? 'Creating Account...' : `✓ Create ${formData.role} Account`}
+                        </SuccessBtn>
                     </div>
                 </form>
             </Card>
         </PageWrap>
     );
 }
+
 // ════════════════════════════════════════════════════════════════
 // NEW: INVENTORY MANAGEMENT PAGE
 // ════════════════════════════════════════════════════════════════

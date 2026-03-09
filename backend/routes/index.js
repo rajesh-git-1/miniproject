@@ -2,7 +2,7 @@
 import express from 'express';
 import mongoose from 'mongoose'; 
 import auth from '../middleware/authMiddleware.js';
-
+import bcrypt from 'bcryptjs';
 // Import all models using ES Module syntax
 import {
   User, Student, Teacher, Class, Subject,
@@ -20,6 +20,27 @@ const ok  = (res, data, msg='Success') => res.json({ success:true, message:msg, 
 const err = (res, msg='Server error', code=500) => res.status(code).json({ success:false, message:msg });
 const adminOnly = [auth, (req,res,next) => req.user.role==='Admin'?next():err(res,'Admin only',403)];
 
+
+router.post("/set-password", auth, async (req, res) => {
+  try {
+    const { newPassword } = req.body;
+
+    // 1. Encrypt the new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    // 2. Find the logged-in user and update their password
+    await User.findByIdAndUpdate(req.user.id, { 
+      password: hashedPassword,
+      isFirstLogin: false // Changes their status so they don't see this page again
+    });
+
+    res.json({ success: true, message: "Password updated successfully!" });
+  } catch (error) {
+    console.error("Set Password Error:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
 // ════════════════════════════════════════════════════════════════
 // DASHBOARD STATS
 // ════════════════════════════════════════════════════════════════
@@ -78,25 +99,184 @@ router.get('/dashboard/activity', auth, async (req, res) => {
 // ════════════════════════════════════════════════════════════════
 // REGISTRATIONS (existing)
 // ════════════════════════════════════════════════════════════════
+// router.get('/admin/registrations', adminOnly, async (req, res) => {
+//   try {
+//     const regs = await PendingRegistration.find({ status:'Pending' }).sort({ createdAt:-1 });
+//     ok(res, regs);
+//   } catch(e) { err(res, e.message); }
+// });
+
+// router.put('/admin/registrations/:id', adminOnly, async (req, res) => {
+//   try {
+//     const { status } = req.body;
+//     const reg = await PendingRegistration.findByIdAndUpdate(req.params.id, { status }, { new:true });
+//     if (!reg) return err(res,'Registration not found',404);
+//     if (status === 'Approved') {
+//       await ActivityLog.create({ user:req.user._id, action:'User Approved', module:'Registrations', details:`Approved ${reg.role}: ${reg.name}` });
+//     }
+//     ok(res, reg, `Registration ${status}`);
+//   } catch(e) { err(res, e.message); }
+// });
+
+// ════════════════════════════════════════════════════════════════
+// REGISTRATIONS (Permanent Approval Logic)
+// ════════════════════════════════════════════════════════════════
+// const bcrypt = require('bcryptjs'); // Ensure bcrypt is available for password hashing
+
 router.get('/admin/registrations', adminOnly, async (req, res) => {
   try {
-    const regs = await PendingRegistration.find({ status:'Pending' }).sort({ createdAt:-1 });
-    ok(res, regs);
-  } catch(e) { err(res, e.message); }
+    const { status } = req.query;
+    const q = status ? { status } : {};
+    const regs = await PendingRegistration.find(q).sort({ createdAt: -1 });
+    res.json({ success: true, data: regs });
+  } catch (e) { 
+    res.status(500).json({ success: false, message: e.message }); 
+  }
 });
 
-router.put('/admin/registrations/:id', adminOnly, async (req, res) => {
+router.put('/admin/registrations/:id/:action', adminOnly, async (req, res) => {
   try {
-    const { status } = req.body;
-    const reg = await PendingRegistration.findByIdAndUpdate(req.params.id, { status }, { new:true });
-    if (!reg) return err(res,'Registration not found',404);
-    if (status === 'Approved') {
-      await ActivityLog.create({ user:req.user._id, action:'User Approved', module:'Registrations', details:`Approved ${reg.role}: ${reg.name}` });
-    }
-    ok(res, reg, `Registration ${status}`);
-  } catch(e) { err(res, e.message); }
-});
+    const { id, action } = req.params;
+    const reg = await PendingRegistration.findById(id);
+    
+    if (!reg) return res.status(404).json({ success: false, message: 'Registration not found' });
+    if (reg.status === 'Approved') return res.status(400).json({ success: false, message: 'Already approved!' });
 
+    // IF REJECTED
+    if (action === 'reject') {
+      reg.status = 'Rejected';
+      await reg.save();
+      return res.json({ success: true, message: 'Registration rejected.' });
+    }
+
+//     // IF APPROVED
+//     if (action === 'approve') {
+//       // 1. Create the permanent User for login
+//       const salt = await bcrypt.genSalt(10);
+//       const hashedPassword = await bcrypt.hash("Welcome@123", salt);
+
+//       const authUser = await User.create({
+//         name: reg.name,
+//         email: reg.email,
+//         password: hashedPassword,
+//         role: reg.role,
+//         isFirstLogin: true
+//       });
+
+//       // 2. Move data to Students or Teachers collection permanently
+//       if (reg.role === 'Student') {
+//         await Student.create({
+//           name: reg.name,
+//           email: reg.email,
+//           user: authUser._id,
+//           rollNo: reg.rollNo || `S-${Date.now().toString().slice(-6)}`,
+//           standard: reg.className || reg.standard,
+//           section: reg.section,
+//           gender: reg.gender,
+//           fatherName: reg.fatherName,
+//           motherName: reg.motherName,
+//           house: reg.house,
+//           address: reg.address,
+//           phone: reg.mobile || reg.phone,
+//           profilePhotoUrl: reg.profilePhotoUrl,
+//           isActive: true
+//         });
+//       } else if (reg.role === 'Teacher') {
+//         await Teacher.create({
+//           name: reg.name,
+//           email: reg.email,
+//           user: authUser._id,
+//           teacherId: reg.teacherId || `T-${Date.now().toString().slice(-6)}`,
+//           department: reg.department,
+//           qualification: reg.qualification,
+//           experience: reg.experience,
+//           salary: reg.salary,
+//           phone: reg.mobile || reg.phone,
+//           address: reg.address,
+//           profilePhotoUrl: reg.profilePhotoUrl,
+//           isActive: true
+//         });
+//       }
+
+//       // 3. Mark as approved in the pending list
+//       reg.status = 'Approved';
+//       await reg.save();
+
+//       // Log the activity
+//       await ActivityLog.create({ user: req.user._id, action: 'User Approved', module: 'Registrations', details: `Approved ${reg.role}: ${reg.name}` });
+
+//       return res.json({ success: true, message: `${reg.role} permanently added to the system!` });
+//     }
+// IF APPROVED
+    if (action === 'approve') {
+      // 🕵️‍♂️ SPY LOG: See exactly what the DB is holding
+      console.log("Found Registration Data:", reg);
+
+      // 1. Create the permanent User for login
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash("Welcome@123", salt);
+
+      // Use || to handle different possible naming conventions (e.g., mobile vs phone)
+      const userData = {
+        name: reg.name || reg.fullName,
+        email: reg.email,
+        password: hashedPassword,
+        role: reg.role,
+        isFirstLogin: true
+      };
+
+      console.log("Attempting to create User with:", userData);
+      const authUser = await User.create(userData);
+
+      // 2. Move data to Students or Teachers collection permanently
+      if (reg.role === 'Student') {
+        await Student.create({
+          name: userData.name,
+          email: userData.email,
+          user: authUser._id,
+          rollNo: reg.rollNo || reg.studentId || `S-${Date.now().toString().slice(-6)}`,
+          standard: reg.className || reg.standard,
+          section: reg.section || 'A',
+          gender: reg.gender,
+          fatherName: reg.fatherName,
+          motherName: reg.motherName,
+          house: reg.house,
+          address: reg.address,
+          phone: reg.mobile || reg.phone,
+          profilePhotoUrl: reg.profilePhotoUrl,
+          isActive: true
+        });
+      } else if (reg.role === 'Teacher') {
+        await Teacher.create({
+          name: userData.name,
+          email: userData.email,
+          user: authUser._id,
+          teacherId: reg.teacherId || `T-${Date.now().toString().slice(-6)}`,
+          department: reg.department,
+          qualification: reg.qualification,
+          experience: reg.experience,
+          salary: reg.salary,
+          phone: reg.mobile || reg.phone,
+          address: reg.address,
+          profilePhotoUrl: reg.profilePhotoUrl,
+          isActive: true
+        });
+      }
+
+      // 3. Mark as approved
+      reg.status = 'Approved';
+      await reg.save();
+
+      await ActivityLog.create({ user: req.user._id, action: 'User Approved', module: 'Registrations', details: `Approved ${reg.role}: ${userData.name}` });
+
+      return res.json({ success: true, message: `${reg.role} permanently added to the system!` });
+    }
+
+  } catch (e) {
+    console.error("Approval Error:", e);
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
 // ════════════════════════════════════════════════════════════════
 // STUDENTS
 // ════════════════════════════════════════════════════════════════
@@ -108,7 +288,9 @@ router.get('/students', auth, async (req, res) => {
     if (section)  q.section  = section;
     if (search)   q.name     = { $regex: search, $options:'i' };
     const [students, total] = await Promise.all([
-      Student.find(q).populate('classId','name').sort({ rollNo:1 })
+      Student.find(q)
+             .populate('classId', 'name standard section')  // Populate for combined class label e.g. '7A'
+             .sort({ rollNo:1 })
              .skip((page-1)*limit).limit(+limit),
       Student.countDocuments(q),
     ]);
@@ -124,11 +306,44 @@ router.get('/students/:id', auth, async (req, res) => {
   } catch(e) { err(res, e.message); }
 });
 
+// router.post('/students', adminOnly, async (req, res) => {
+//   try {
+//     const studentData = { ...req.body };
+
+//     // 🛡️ BULLETPROOF FIX: Force a brand new, unique Roll Number every single time.
+//     studentData.rollNo = `S-${Date.now().toString().slice(-6)}`;
+
+//     const s = await Student.create(studentData);
+    
+//     if (studentData.classId) {
+//       await Class.findByIdAndUpdate(studentData.classId, { $push:{ students: s._id } });
+//     }
+    
+//     await ActivityLog.create({ user:req.user._id, action:'Student Added', module:'Students', details:`Added ${s.name}` });
+    
+//     ok(res, s, `Student created successfully with Roll No: ${studentData.rollNo}`);
+    
+//   } catch(e) { 
+//     // Catch duplicate errors gracefully
+//     if (e.code === 11000) {
+//       return res.status(400).json({ success: false, message: "A student with this Email or Roll Number already exists!" });
+//     }
+//     err(res, e.message); 
+//   }
+// });
+
 router.post('/students', adminOnly, async (req, res) => {
   try {
     const studentData = { ...req.body };
 
-    // 🛡️ BULLETPROOF FIX: Force a brand new, unique Roll Number every single time.
+    // 1. Force the default password (Ignore anything sent from the frontend)
+    const salt = await bcrypt.genSalt(10);
+    studentData.password = await bcrypt.hash("Welcome@123", salt);
+    
+    // 2. Force them to change it on first login
+    studentData.isFirstLogin = true; 
+
+    // Force unique Roll Number
     studentData.rollNo = `S-${Date.now().toString().slice(-6)}`;
 
     const s = await Student.create(studentData);
@@ -139,13 +354,9 @@ router.post('/students', adminOnly, async (req, res) => {
     
     await ActivityLog.create({ user:req.user._id, action:'Student Added', module:'Students', details:`Added ${s.name}` });
     
-    ok(res, s, `Student created successfully with Roll No: ${studentData.rollNo}`);
-    
+    ok(res, s, `Student created! Default Password is: Welcome@123`);
   } catch(e) { 
-    // Catch duplicate errors gracefully
-    if (e.code === 11000) {
-      return res.status(400).json({ success: false, message: "A student with this Email or Roll Number already exists!" });
-    }
+    if (e.code === 11000) return res.status(400).json({ success: false, message: "Email or Roll Number already exists!" });
     err(res, e.message); 
   }
 });
@@ -190,11 +401,29 @@ router.get('/teachers/:id', auth, async (req, res) => {
   } catch(e) { err(res, e.message); }
 });
 
+// router.post('/teachers', adminOnly, async (req, res) => {
+//   try {
+//     const t = await Teacher.create(req.body);
+//     await ActivityLog.create({ user:req.user._id, action:'Teacher Added', module:'Teachers', details:`Added ${t.name}` });
+//     ok(res, t, 'Teacher created');
+//   } catch(e) { err(res, e.message); }
+// });
+
 router.post('/teachers', adminOnly, async (req, res) => {
   try {
-    const t = await Teacher.create(req.body);
+    const teacherData = { ...req.body };
+
+    // 1. Force the default password
+    const salt = await bcrypt.genSalt(10);
+    teacherData.password = await bcrypt.hash("Welcome@123", salt);
+    
+    // 2. Force them to change it on first login
+    teacherData.isFirstLogin = true;
+
+    const t = await Teacher.create(teacherData);
     await ActivityLog.create({ user:req.user._id, action:'Teacher Added', module:'Teachers', details:`Added ${t.name}` });
-    ok(res, t, 'Teacher created');
+    
+    ok(res, t, 'Teacher created! Default Password is: Welcome@123');
   } catch(e) { err(res, e.message); }
 });
 
@@ -902,6 +1131,87 @@ router.get('/dashboard/principal', auth, async (req, res) => {
 
   } catch(e) { 
     err(res, e.message); 
+  }
+});
+// ════════════════════════════════════════════════════════════════
+// ADMIN DIRECT USER CREATION (Instant Reflection)
+// ════════════════════════════════════════════════════════════════
+router.post('/auth/register', adminOnly, async (req, res) => {
+  try {
+    const { role, name, email, mobile, address, profilePhotoUrl, classId } = req.body;
+
+    // 1. Check if user already exists
+    const exists = await User.findOne({ email });
+    if (exists) return res.status(400).json({ success: false, message: 'User already exists' });
+
+    // 2. Create the permanent login account
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash("Welcome@123", salt);
+
+    const newUser = await User.create({
+      name,
+      email,
+      password: hashedPassword,
+      role,
+      isFirstLogin: true
+    });
+
+    // 3. Create the specific profile (Student or Teacher)
+    if (role === 'Student') {
+      const newStudent = await Student.create({
+        name,
+        email,
+        user: newUser._id,
+        rollNo: req.body.rollNo,
+        classId: classId, 
+        fatherName: req.body.fatherName,
+        motherName: req.body.motherName,
+        gender: req.body.gender,
+        house: req.body.house,
+        dob: req.body.dob,
+        phone: mobile,
+        address: address,
+        profilePhotoUrl: profilePhotoUrl,
+        isActive: true
+      });
+
+      // 🚀 4. LINK STUDENT TO CLASS: Push student ID into the Class's student array
+      if (classId) {
+        await Class.findByIdAndUpdate(classId, { 
+            $push: { students: newStudent._id } 
+        });
+      }
+    } // <--- THIS BRACKET WAS MISSING!
+    else if (role === 'Teacher') {
+      await Teacher.create({
+        name,
+        email,
+        user: newUser._id,
+        teacherId: req.body.teacherId || `T-${Date.now().toString().slice(-6)}`,
+        department: req.body.department,
+        qualification: req.body.qualification,
+        experience: req.body.experience,
+        salary: req.body.salary,
+        phone: mobile,
+        address: address,
+        profilePhotoUrl: profilePhotoUrl,
+        isActive: true
+      });
+    }
+
+    // 5. Log the action for the Admin audit trail
+    await ActivityLog.create({ 
+      user: req.user._id, 
+      action: `Created ${role}`, 
+      module: 'Auth', 
+      details: `Admin manually created ${role}: ${name}` 
+    });
+
+    res.json({ success: true, message: `${role} created and successfully linked to lists!` });
+
+  } catch (e) {
+    console.error("❌ User Creation Error:", e);
+    res.status(500).json({ success: false, message: e.message });
   }
 });
 

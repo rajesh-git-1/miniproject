@@ -1,159 +1,9 @@
-// import React, { useState, useEffect } from 'react';
-// import { useSelector } from 'react-redux';
 
-// const AdminDashboard = () => {
-//     const [registrations, setRegistrations] = useState([]);
-//     const [loading, setLoading] = useState(true);
-//     const token = useSelector(state => state.auth.token);
-
-//     useEffect(() => {
-//         fetchRegistrations();
-//     }, []);
-
-//     const fetchRegistrations = async () => {
-//         try {
-//             // const response = await fetch('/api/admin/registrations', {
-//             //     headers: { 'Authorization': `Bearer ${token}` }
-//             const response = await fetch('http://localhost:5000/api/admin/registrations', { // <-- ADDED URL
-//                 headers: { 'Authorization': `Bearer ${token}` }
-//             });
-
-//             const data = await response.json();
-//             if (data.success) setRegistrations(data.data);
-//         } catch (err) {
-//             console.error(err);
-//         } finally {
-//             setLoading(false);
-//         }
-//     };
-
-//     const handleReview = async (id, status) => {
-//         try {
-//             // const response = await fetch(`/api/admin/registrations/${id}`, {
-//             //     method: 'PUT',
-//             const response = await fetch(`http://localhost:5000/api/admin/registrations/${id}`, { // <-- ADDED URL
-//                 method: 'PUT',
-//                 // ... rest of the code
-//                 headers: {
-//                     'Content-Type': 'application/json',
-//                     'Authorization': `Bearer ${token}`
-//                 },
-//                 body: JSON.stringify({ status })
-//             });
-//             const data = await response.json();
-//             if (data.success) {
-//                 // Remove from list immediately upon success
-//                 setRegistrations(prev => prev.filter(r => r._id !== id));
-//             } else {
-//                 alert(data.message);
-//             }
-//         } catch (err) {
-//             alert("Error reviewing registration");
-//         }
-//     };
-
-//     // Helper to render role-specific details in the table
-//     const renderDetails = (reg) => {
-//         switch (reg.role) {
-//             case 'Student':
-//                 return `Roll: ${reg.rollNo || 'N/A'} | Class: ${reg.standard || 'N/A'}`;
-//             case 'Teacher':
-//                 return `ID: ${reg.teacherId || 'N/A'} | Desig: ${reg.designation || 'N/A'}`;
-//             case 'Admin':
-//                 return `Admin ID: ${reg.adminId || 'N/A'} | Access: ${reg.accessLevel || 'N/A'}`;
-//             case 'Principal':
-//                 return `Principal ID: ${reg.principalId || 'N/A'} | Exp: ${reg.experience || 'N/A'}`;
-//             default:
-//                 return 'No details provided';
-//         }
-//     };
-
-//     return (
-//         <div className="space-y-6">
-//             <div className="card">
-//                 <h3 className="text-xl font-bold text-textMain mb-6 pb-2 border-b border-gray-100">
-//                     Pending User Registrations
-//                 </h3>
-
-//                 {loading ? (
-//                     <p className="text-gray-500 text-center py-4">Loading registrations...</p>
-//                 ) : registrations.length === 0 ? (
-//                     <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
-//                         <p className="text-gray-500 font-medium">No pending registrations found.</p>
-//                     </div>
-//                 ) : (
-//                     <div className="table-wrapper">
-//                         <table className="data-table">
-//                             <thead>
-//                                 <tr>
-//                                     <th>User</th>
-//                                     <th>Role</th>
-//                                     <th>Details</th>
-//                                     <th className="text-center">Actions</th>
-//                                 </tr>
-//                             </thead>
-//                             <tbody>
-//                                 {registrations.map(reg => (
-//                                     <tr key={reg._id}>
-//                                         <td>
-//                                             <div className="flex items-center">
-//                                                 <div className="h-10 w-10 flex-shrink-0">
-//                                                     {reg.profilePhotoUrl ? (
-//                                                         <img className="h-10 w-10 rounded-full object-cover" src={reg.profilePhotoUrl} alt="" />
-//                                                     ) : (
-//                                                         <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold border border-primary/20">
-//                                                             {reg.name.charAt(0)}
-//                                                         </div>
-//                                                     )}
-//                                                 </div>
-//                                                 <div className="ml-4">
-//                                                     <div className="text-sm font-medium text-textMain">{reg.name}</div>
-//                                                     <div className="text-sm text-textMuted">{reg.email}</div>
-//                                                 </div>
-//                                             </div>
-//                                         </td>
-//                                         <td>
-//                                             <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-//                                                 ${reg.role === 'Teacher' ? 'bg-secondary/10 text-secondary' :
-//                                                     reg.role === 'Student' ? 'bg-accent/10 text-accent' :
-//                                                         reg.role === 'Admin' ? 'bg-primary/10 text-primary' :
-//                                                             'bg-orange-100 text-orange-800' // Principal
-//                                                 }`}>
-//                                                 {reg.role}
-//                                             </span>
-//                                         </td>
-//                                         <td>
-//                                             {renderDetails(reg)}
-//                                         </td>
-//                                         <td className="text-center space-x-2">
-//                                             <button
-//                                                 onClick={() => handleReview(reg._id, 'Approved')}
-//                                                 className="btn !py-1.5 !px-3 btn-accent text-xs"
-//                                             >
-//                                                 Approve
-//                                             </button>
-//                                             <button
-//                                                 onClick={() => handleReview(reg._id, 'Rejected')}
-//                                                 className="btn !py-1.5 !px-3 btn-danger text-xs"
-//                                             >
-//                                                 Reject
-//                                             </button>
-//                                         </td>
-//                                     </tr>
-//                                 ))}
-//                             </tbody>
-//                         </table>
-//                     </div>
-//                 )}
-//             </div>
-//         </div>
-//     );
-// };
-
-// export default AdminDashboard;
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
+
+import axios from "axios";
 
 // ─── DESIGN TOKENS (same as DashboardLayout) ─────────────────────────────────
 const C = {
@@ -355,9 +205,124 @@ function StatCard({ card, index }) {
 // ═══════════════════════════════════════════════════════════════════════════════
 // SECTION 1 — DASHBOARD HOME
 // ═══════════════════════════════════════════════════════════════════════════════
-function DashboardHome({ user }) {
+
+
+// function DashboardHome({ user }) {
+//     // 1. Create state to hold our real database numbers
+//     const [stats, setStats] = useState({
+//         totalStudents: 0,
+//         totalTeachers: 0,
+//         totalClasses: 0,
+//         feeCollected: 0,
+//         attendancePct: 0,
+//         pendingRegs: 0
+//     });
+//     const [loading, setLoading] = useState(true);
+
+//     // 2. Fetch the real data from the backend when the page loads
+//     useEffect(() => {
+//         const fetchDashboardData = async () => {
+//             try {
+//                 const token = localStorage.getItem("token");
+//                 const response = await axios.get("http://localhost:5000/api/dashboard/stats", {
+//                     headers: { Authorization: `Bearer ${token}` }
+//                 });
+
+//                 if (response.data.success) {
+//                     // ADD THIS SPY LINE:
+//                     console.log("🔥 DATA FROM BACKEND:", response.data.data);
+                    
+//                     setStats(response.data.data);
+//                 }
+//             } catch (error) {
+//                 console.error("Error fetching dashboard stats:", error);
+//             } finally {
+//                 setLoading(false);
+//             }
+//         };
+
+//         fetchDashboardData();
+//     }, []);
+// 👇 1. Receive the token here 👇
+function DashboardHome({ user, token }) { 
+    console.log("🔥🔥🔥 DASHBOARD IS RENDERING! Token:", token ? "Exists" : "Missing");
+    const [stats, setStats] = useState({
+        totalStudents: 0,
+        totalTeachers: 0,
+        totalClasses: 0,
+        feeCollected: 0,
+        attendancePct: 0,
+        pendingRegs: 0
+    });
+    const [loading, setLoading] = useState(true);
+
+    // useEffect(() => {
+    //     const fetchDashboardData = async () => {
+    //         try {
+    //             // 👇 2. Use the token from props, NOT localStorage! 👇
+    //             const response = await axios.get("http://localhost:5000/api/dashboard/stats", {
+    //                 headers: { Authorization: `Bearer ${token}` }
+    //             });
+
+    //             if (response.data.success) {
+    //                 console.log("🔥 DATA FROM BACKEND:", response.data.data);
+    //                 setStats(response.data.data);
+    //             }
+    //         } catch (error) {
+    //             console.error("❌ Error fetching dashboard stats:", error);
+    //         } finally {
+    //             setLoading(false);
+    //         }
+    //     };
+
+    //     // Only run the fetch if we actually have the token
+    //     if (token) {
+    //         fetchDashboardData();
+    //     }
+    // }, [token]); // Add token as a dependency
+    useEffect(() => {
+        console.log("1. Dashboard loaded! Preparing to fetch...");
+        
+        const fetchDashboardData = async () => {
+            try {
+                // Grab the token from LocalStorage to guarantee we have it instantly
+                const authToken = localStorage.getItem("token");
+                console.log("2. Token found?", authToken ? "YES" : "NO");
+
+                const response = await axios.get("http://localhost:5000/api/dashboard/stats", {
+                    headers: { Authorization: `Bearer ${authToken}` }
+                });
+
+                console.log("3. RAW BACKEND RESPONSE:", response.data);
+
+                // If the backend sends the data, update the cards!
+                if (response.data && response.data.success) {
+                    console.log("4. 🚀 Stats updated successfully!");
+                    setStats(response.data.data);
+                } else {
+                    console.log("⚠️ Backend answered, but success was false!");
+                }
+            } catch (error) {
+                console.error("❌ ERROR FETCHING STATS:", error.message);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchDashboardData(); // Force it to run immediately
+    }, []); // Empty brackets mean it runs exactly once when the page opens
+    // 3. Dynamically build the cards using the fetched 'stats'
+    const DYNAMIC_SUMMARY_CARDS = [
+        { label: "Total Students", value: stats.totalStudents, delta: "Active", icon: "🎓", color: C.accent },
+        { label: "Total Teachers", value: stats.totalTeachers, delta: "Active", icon: "👨‍🏫", color: C.success },
+        { label: "Total Classes", value: stats.totalClasses, delta: "Running", icon: "🏫", color: C.warning },
+        { label: "Fees Collected", value: `₹${stats.feeCollected}`, delta: "This Year", icon: "💰", color: "#bc8cff" },
+    ];
+
+    // return (
+    //     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20, backgroundColor: 'deeppink', padding: '50px' }}>
 
             {/* Welcome banner */}
             <div style={{
@@ -372,7 +337,7 @@ function DashboardHome({ user }) {
                         fontFamily: "'Syne', sans-serif",
                         fontSize: 22, fontWeight: 800, color: C.text,
                     }}>
-                        Good Morning, {user?.name?.split(' ')[0]} 👋
+                        Good Morning, {user?.name?.split(' ')[0] || "Admin"} 👋
                     </div>
                     <div style={{ fontSize: 13, color: C.textMuted, marginTop: 5 }}>
                         {new Date().toLocaleDateString('en-IN', {
@@ -381,7 +346,7 @@ function DashboardHome({ user }) {
                         <span style={{ color: C.accent }}> · Abhyaas School ERP</span>
                     </div>
                 </div>
-                {/* Quick link to registrations */}
+                {/* Quick link to registrations dynamically showing count */}
                 <Link
                     to="/dashboard/admin/registrations"
                     style={{
@@ -392,17 +357,21 @@ function DashboardHome({ user }) {
                         textDecoration: 'none', whiteSpace: 'nowrap',
                     }}
                 >
-                    5 pending approvals →
+                    {stats.pendingRegs} pending approvals →
                 </Link>
             </div>
 
-            {/* Summary cards */}
+            {/* Summary cards (Now mapping over our real data) */}
             <div style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fill, minmax(155px, 1fr))',
                 gap: 12,
             }}>
-                {SUMMARY_CARDS.map((card, i) => <StatCard key={i} card={card} index={i} />)}
+                {loading ? (
+                   <div style={{ color: C.textMuted, fontSize: 14, padding: 10 }}>Loading stats...</div>
+                ) : (
+                   DYNAMIC_SUMMARY_CARDS.map((card, i) => <StatCard key={i} card={card} index={i} />)
+                )}
             </div>
 
             {/* Charts row */}
@@ -419,27 +388,29 @@ function DashboardHome({ user }) {
                                 fontFamily: "'Syne', sans-serif",
                                 fontSize: 14, fontWeight: 700, color: C.text,
                             }}>
-                                Weekly Attendance
+                                Daily Attendance
                             </div>
                             <div style={{ fontSize: 11, color: C.textMuted, marginTop: 2 }}>
-                                School-wide · last 6 days
+                                School-wide · Today
                             </div>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                            <Donut pct={93} color={C.accent} />
+                            {/* Dynamically pass the real attendance percentage */}
+                            <Donut pct={stats.attendancePct} color={C.accent} />
                             <div>
                                 <div style={{
                                     fontFamily: "'Syne', sans-serif",
                                     fontSize: 22, fontWeight: 800, color: C.text,
-                                }}>93%</div>
+                                }}>{stats.attendancePct}%</div>
                                 <div style={{ fontSize: 11, color: C.textMuted }}>avg rate</div>
                             </div>
                         </div>
                     </div>
-                    <SparkBar data={ATTENDANCE_DATA} />
+                    {/* Keep your existing SparkBar if you have it */}
+                    <SparkBar data={ATTENDANCE_DATA || []} />
                 </div>
 
-                {/* Upcoming events */}
+                {/* Upcoming events (Leaving as hardcoded for now, or you can map real announcements later) */}
                 <div style={{
                     background: C.surface, border: `1px solid ${C.border}`,
                     borderRadius: 12, padding: 20,
@@ -451,7 +422,7 @@ function DashboardHome({ user }) {
                         Upcoming Events
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
-                        {UPCOMING_EVENTS.map((e, i) => (
+                        {(typeof UPCOMING_EVENTS !== 'undefined' ? UPCOMING_EVENTS : []).map((e, i) => (
                             <div key={i} style={{
                                 display: 'flex', alignItems: 'center', gap: 12,
                                 padding: '9px 12px', borderRadius: 8,
@@ -459,15 +430,15 @@ function DashboardHome({ user }) {
                             }}>
                                 <div style={{
                                     width: 4, height: 34,
-                                    borderRadius: 2, background: e.color, flexShrink: 0,
+                                    borderRadius: 2, background: e.color || C.accent, flexShrink: 0,
                                 }} />
                                 <div style={{ flex: 1 }}>
                                     <div style={{ fontSize: 12, fontWeight: 600, color: C.text }}>{e.name}</div>
                                     <div style={{ fontSize: 11, color: C.textMuted }}>{e.cls}</div>
                                 </div>
                                 <span style={{
-                                    fontSize: 11, fontWeight: 700, color: e.color,
-                                    background: e.color + '18',
+                                    fontSize: 11, fontWeight: 700, color: e.color || C.accent,
+                                    background: (e.color || C.accent) + '18',
                                     padding: '3px 8px', borderRadius: 6,
                                 }}>
                                     {e.date}
@@ -493,7 +464,7 @@ function DashboardHome({ user }) {
                         Top Performers
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                        {TOP_STUDENTS.map((s, i) => (
+                        {(typeof TOP_STUDENTS !== 'undefined' ? TOP_STUDENTS : []).map((s, i) => (
                             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                                 <div style={{
                                     width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
@@ -542,12 +513,12 @@ function DashboardHome({ user }) {
                         Recent Activity
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                        {RECENT_ACTIVITY.map((a, i) => (
+                        {(typeof RECENT_ACTIVITY !== 'undefined' ? RECENT_ACTIVITY : []).map((a, i) => (
                             <div key={i} style={{ display: 'flex', gap: 11, alignItems: 'flex-start' }}>
                                 <div style={{
                                     width: 8, height: 8, borderRadius: '50%',
-                                    background: a.dot, marginTop: 4, flexShrink: 0,
-                                    boxShadow: `0 0 6px ${a.dot}80`,
+                                    background: a.dot || C.accent, marginTop: 4, flexShrink: 0,
+                                    boxShadow: `0 0 6px ${a.dot || C.accent}80`,
                                 }} />
                                 <div style={{ flex: 1 }}>
                                     <div style={{ fontSize: 12, color: C.text, lineHeight: 1.5 }}>{a.text}</div>
@@ -561,7 +532,6 @@ function DashboardHome({ user }) {
         </div>
     );
 }
-
 // ═══════════════════════════════════════════════════════════════════════════════
 // SECTION 2 — PENDING REGISTRATIONS
 // (original logic 100% preserved — fetch, handleReview, renderDetails)
@@ -929,22 +899,40 @@ function PendingRegistrations({ token }) {
 // Renders DashboardHome on /dashboard/admin
 // Renders PendingRegistrations on /dashboard/admin/registrations
 // ═══════════════════════════════════════════════════════════════════════════════
+// const AdminDashboard = () => {
+//     const token    = useSelector(state => state.auth.token);
+//     const user     = useSelector(state => state.auth.user);
+//     const location = window.location.pathname; // uses native — avoids extra import
+
+//     // decide which view to show based on URL
+//     const isRegistrations = location.includes('/registrations');
+
+//     return (
+//         <>
+//             {isRegistrations
+//                 ? <PendingRegistrations token={token} />
+//                 : <DashboardHome user={user} />
+//             }
+//         </>
+//     );
+// };
+
 const AdminDashboard = () => {
+    alert("AdminDashboard file is successfully connected!");
     const token    = useSelector(state => state.auth.token);
     const user     = useSelector(state => state.auth.user);
-    const location = window.location.pathname; // uses native — avoids extra import
+    const location = window.location.pathname;
 
-    // decide which view to show based on URL
     const isRegistrations = location.includes('/registrations');
 
     return (
         <>
             {isRegistrations
                 ? <PendingRegistrations token={token} />
-                : <DashboardHome user={user} />
+                // 👇 1. ADD THE TOKEN PROP HERE 👇
+                : <DashboardHome user={user} token={token} /> 
             }
         </>
     );
 };
-
 export default AdminDashboard;
