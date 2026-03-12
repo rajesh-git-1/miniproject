@@ -203,14 +203,14 @@
 //             }}>
 //                 {navLinks.map((link, index) => {
 //                     const isDropdown = !!link.children;
-                    
+
 //                     // Logic to determine active states
 //                     const isActiveParent = link.path && location.pathname === link.path;
 //                     const isChildActive = isDropdown && link.children.some(c => location.pathname === c.path);
-                    
+
 //                     const isActive = isDropdown ? isActiveParent : location.pathname === link.path;
 //                     const isDropdownOpen = openMenu === index || isChildActive || isActiveParent;
-                    
+
 //                     const isHov    = hov === link.name;
 //                     const badge    = link.badge ? pendingCount : 0;
 
@@ -280,7 +280,7 @@
 //                                         {link.children.map((child) => {
 //                                             const isChildCurrent = location.pathname === child.path;
 //                                             const isChildHov = hov === child.name;
-                                            
+
 //                                             return (
 //                                                 <Link
 //                                                     key={child.name}
@@ -719,131 +719,141 @@ import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout, selectCurrentUser } from '../store/authSlice';
 // Make sure this points to your actual modules file where useNotifications is exported
-import { useNotifications } from '../pages/modules'; 
+import { useNotifications } from '../pages/modules';
 
 
 // ─── DESIGN TOKENS ────────────────────────────────────────────────────────────
 const C = {
-    bg:          '#0d1117',
-    surface:     '#161b22',
-    surfaceAlt:  '#1c2128',
-    border:      '#30363d',
-    accent:      '#58a6ff',
-    accentDim:   'rgba(88,166,255,0.12)',
-    success:     '#3fb950',
-    danger:      '#f85149',
-    dangerDim:   'rgba(248,81,73,0.10)',
-    purple:      '#bc8cff',
-    orange:      '#ffa657',
-    warning:     '#d29922',
-    text:        '#e6edf3',
-    textMuted:   '#8b949e',
-    textFaint:   '#484f58',
+    bg: '#f8fafc', // slate-50 overall app background
+    surface: '#ffffff', // pure white for cards
+    surfaceAlt: '#eef2ff', // indigo-50 soft purple highlight for active/hover links
+    border: '#e2e8f0', // slate-200 border
+    accent: '#3730a3', // indigo-800 deep indigo for active states, brand colors
+    accentDim: '#eef2ff', // indigo-50
+    success: '#0d9488', // teal-600 vibrant teal-green for success/action
+    danger: '#ef4444', // red-500
+    dangerDim: '#fee2e2', // red-100
+    purple: '#6d28d9', // purple-700
+    purpleDim: '#f3e8ff', // purple-50
+    orange: '#ea580c', // orange-600
+    warning: '#f59e0b', // amber-500 warm amber/orange for alerts
+    text: '#1e293b', // slate-800 deep slate (no pure black) for headings
+    textMuted: '#475569', // slate-600 softer dark slate-gray for standard text
+    textFaint: '#94a3b8', // slate-400
 };
 
 const ROLE_META = {
     admin: {
-        color:    C.accent,
-        gradient: `linear-gradient(135deg, ${C.accent} 0%, #388bfd 100%)`,
-        icon:     '⚡',
-        label:    'Admin Portal',
+        color: C.accent,
+        gradient: `linear-gradient(135deg, ${C.accent} 0%, #4f46e5 100%)`, // indigo gradient
+        icon: '⚡',
+        label: 'Admin Portal',
         links: [
-            { name: 'Dashboard',     path: '/dashboard/admin',               icon: '◈' },
+            { name: 'Dashboard', path: '/dashboard/admin', icon: '◈' },
             { name: 'Registrations', path: '/dashboard/admin/registrations', icon: '◉', badge: true },
             {
                 name: 'User Creation',
-                path: '/dashboard/admin/user-creation', // This path makes the parent tab clickable
                 icon: '👤',
                 children: [
+                    { name: 'Create User', path: '/dashboard/admin/user-creation', icon: '➕' },
                     { name: 'Students', path: '/dashboard/admin/students', icon: '◎' },
                     { name: 'Teachers', path: '/dashboard/admin/teachers', icon: '◍' }
                 ]
             },
-            { name: 'Classes',       path: '/dashboard/admin/classes',       icon: '⬡' },
-            { name: 'Attendance',    path: '/dashboard/admin/attendance',    icon: '◷' },
-            { name: 'Examinations',  path: '/dashboard/admin/exams',         icon: '◈' },
-            { name: 'Timetable',     path: '/dashboard/admin/timetable',     icon: '▦' },
-            { name: 'Fee Management',path: '/dashboard/admin/fees',          icon: '◆' },
-            { name: 'Inventory',     path: '/dashboard/admin/inventory',     icon: '📦' },
+            {
+                name: 'Classes',
+                path: '/dashboard/admin/classes',
+                icon: '⬡',
+                children: [
+                    { name: 'View Classes', path: '/dashboard/admin/classes/view', icon: '◎' },
+                    { name: 'Create Class', path: '/dashboard/admin/classes/create', icon: '◍' },
+                    { name: 'Create Houses', path: '/dashboard/admin/classes/houses', icon: '◫' }
+                ]
+            },
+            { name: 'Attendance', path: '/dashboard/admin/attendance', icon: '◷' },
+            { name: 'Examinations', path: '/dashboard/admin/exams', icon: '◈' },
+            { name: 'Timetable', path: '/dashboard/admin/timetable', icon: '▦' },
+            { name: 'Fee Management', path: '/dashboard/admin/fees', icon: '◆' },
+            { name: 'Inventory', path: '/dashboard/admin/inventory', icon: '📦' },
             { name: 'Announcements', path: '/dashboard/admin/communication', icon: '◎' },
-            { name: 'Reports',       path: '/dashboard/admin/reports',       icon: '◫' },
-            { name: 'Talent Tests',  path: '/dashboard/admin/talent',        icon: '★' },
-            { name: 'Leave Mgmt',    path: '/dashboard/admin/leave',         icon: '◷' },
-            { name: 'Payroll',       path: '/dashboard/admin/payroll',       icon: '◆' },
-            { name: 'Activity Logs', path: '/dashboard/admin/logs',          icon: '◎' },
+            { name: 'Reports', path: '/dashboard/admin/reports', icon: '◫' },
+            { name: 'Talent Tests', path: '/dashboard/admin/talent', icon: '★' },
+            { name: 'Leave Mgmt', path: '/dashboard/admin/leave', icon: '◷' },
+            { name: 'Payroll', path: '/dashboard/admin/payroll', icon: '◆' },
+            { name: 'Activity Logs', path: '/dashboard/admin/logs', icon: '◎' },
         ],
     },
     principal: {
-        color:    C.purple,
-        gradient: `linear-gradient(135deg, ${C.purple} 0%, #8957e5 100%)`,
-        icon:     '🎓',
-        label:    'Principal Portal',
+        color: C.purple,
+        gradient: `linear-gradient(135deg, ${C.purple} 0%, #a78bfa 100%)`,
+        icon: '🎓',
+        label: 'Principal Portal',
         links: [
-            { name: 'Dashboard',     path: '/dashboard/principal',               icon: '◈' },
-            { name: 'View Students', path: '/dashboard/principal/students',      icon: '◎' },
-            { name: 'View Teachers', path: '/dashboard/principal/teachers',      icon: '◍' },
-            { name: 'Attendance',    path: '/dashboard/principal/attendance',    icon: '◷' },
-            { name: 'Performance',   path: '/dashboard/principal/performance',   icon: '◫' },
-            { name: 'Exam Results',  path: '/dashboard/principal/exams',         icon: '◈' },
-            { name: 'Fee Reports',   path: '/dashboard/principal/fees',          icon: '◆' },
-            { name: 'Timetable',     path: '/dashboard/principal/timetable',     icon: '▦' },
+            { name: 'Dashboard', path: '/dashboard/principal', icon: '◈' },
+            { name: 'View Students', path: '/dashboard/principal/students', icon: '◎' },
+            { name: 'View Teachers', path: '/dashboard/principal/teachers', icon: '◍' },
+            { name: 'Attendance', path: '/dashboard/principal/attendance', icon: '◷' },
+            { name: 'Performance', path: '/dashboard/principal/performance', icon: '◫' },
+            { name: 'Exam Results', path: '/dashboard/principal/exams', icon: '◈' },
+            { name: 'Fee Reports', path: '/dashboard/principal/fees', icon: '◆' },
+            { name: 'Timetable', path: '/dashboard/principal/timetable', icon: '▦' },
             { name: 'Announcements', path: '/dashboard/principal/communication', icon: '◎' },
-            { name: 'Talent Tests',  path: '/dashboard/principal/talent',        icon: '★' },
-            { name: 'Analytics',     path: '/dashboard/principal/reports',       icon: '◫' },
+            { name: 'Talent Tests', path: '/dashboard/principal/talent', icon: '★' },
+            { name: 'Analytics', path: '/dashboard/principal/reports', icon: '◫' },
         ],
     },
     teacher: {
-        color:    C.success,
+        color: C.success,
         gradient: `linear-gradient(135deg, ${C.success} 0%, #238636 100%)`,
-        icon:     '📚',
-        label:    'Teacher Portal',
+        icon: '📚',
+        label: 'Teacher Portal',
         links: [
-            { name: 'Dashboard',       path: '/dashboard/teacher',               icon: '◈' },
-            { name: 'My Profile',      path: '/dashboard/teacher/profile',       icon: '◉' },
-            { name: 'My Classes',      path: '/dashboard/teacher/classes',       icon: '⬡' },
-            { name: 'Mark Attendance', path: '/dashboard/teacher/attendance',    icon: '◷' },
-            { name: 'Enter Marks',     path: '/dashboard/teacher/marks',         icon: '◈' },
-            { name: 'Upload Homework', path: '/dashboard/teacher/homework',      icon: '◉' },
+            { name: 'Dashboard', path: '/dashboard/teacher', icon: '◈' },
+            { name: 'My Profile', path: '/dashboard/teacher/profile', icon: '◉' },
+            { name: 'My Classes', path: '/dashboard/teacher/classes', icon: '⬡' },
+            { name: 'Mark Attendance', path: '/dashboard/teacher/attendance', icon: '◷' },
+            { name: 'Enter Marks', path: '/dashboard/teacher/marks', icon: '◈' },
+            { name: 'Upload Homework', path: '/dashboard/teacher/homework', icon: '◉' },
             { name: 'Evaluate Assignments', path: '/dashboard/teacher/assignments', icon: '◫' },
-            { name: 'Timetable',       path: '/dashboard/teacher/timetable',     icon: '▦' },
-            { name: 'Leave Request',   path: '/dashboard/teacher/leave',         icon: '◷' },
-            { name: 'Student Perf.',   path: '/dashboard/teacher/performance',   icon: '◎' },
-            { name: 'Parent Comm.',    path: '/dashboard/teacher/communication', icon: '◎' },
+            { name: 'Timetable', path: '/dashboard/teacher/timetable', icon: '▦' },
+            { name: 'Leave Request', path: '/dashboard/teacher/leave', icon: '◷' },
+            { name: 'Student Perf.', path: '/dashboard/teacher/performance', icon: '◎' },
+            { name: 'Parent Comm.', path: '/dashboard/teacher/communication', icon: '◎' },
         ],
     },
     student: {
-        color:    C.orange,
+        color: C.orange,
         gradient: `linear-gradient(135deg, ${C.orange} 0%, #e0713b 100%)`,
-        icon:     '🎒',
-        label:    'Student Portal',
+        icon: '🎒',
+        label: 'Student Portal',
         links: [
-            { name: 'Dashboard',    path: '/dashboard/student',           icon: '◈' },
-            { name: 'My Profile',   path: '/dashboard/student/profile',   icon: '◉' },
-            { name: 'Attendance',   path: '/dashboard/student/attendance',icon: '◷' },
-            { name: 'Exam Results', path: '/dashboard/student/results',   icon: '◈' },
-            { name: 'Timetable',    path: '/dashboard/student/timetable', icon: '▦' },
-            { name: 'Homework',     path: '/dashboard/student/homework',  icon: '◉' },
-            { name: 'Fee Status',   path: '/dashboard/student/fees',      icon: '◆' },
-            { name: 'Library',      path: '/dashboard/student/library',   icon: '▣' },
-            { name: 'Notices',      path: '/dashboard/student/notices',   icon: '◎' },
-            { name: 'Talent Tests', path: '/dashboard/student/talent',    icon: '★' },
+            { name: 'Dashboard', path: '/dashboard/student', icon: '◈' },
+            { name: 'My Profile', path: '/dashboard/student/profile', icon: '◉' },
+            { name: 'Attendance', path: '/dashboard/student/attendance', icon: '◷' },
+            { name: 'Exam Results', path: '/dashboard/student/results', icon: '◈' },
+            { name: 'Timetable', path: '/dashboard/student/timetable', icon: '▦' },
+            { name: 'Homework', path: '/dashboard/student/homework', icon: '◉' },
+            { name: 'Fee Status', path: '/dashboard/student/fees', icon: '◆' },
+            { name: 'Library', path: '/dashboard/student/library', icon: '▣' },
+            { name: 'Notices', path: '/dashboard/student/notices', icon: '◎' },
+            { name: 'Talent Tests', path: '/dashboard/student/talent', icon: '★' },
         ],
     },
     parent: {
-        color:    C.success,
+        color: C.success,
         gradient: `linear-gradient(135deg, #39d353 0%, #26a641 100%)`,
-        icon:     '👨‍👩‍👧',
-        label:    'Parent Portal',
+        icon: '👨‍👩‍👧',
+        label: 'Parent Portal',
         links: [
-            { name: 'Dashboard',    path: '/dashboard/parent',           icon: '◈' },
-            { name: 'Child Profile',path: '/dashboard/parent/profile',   icon: '◉' },
-            { name: 'Attendance',   path: '/dashboard/parent/attendance', icon: '◷' },
-            { name: 'Exam Results', path: '/dashboard/parent/results',   icon: '◈' },
-            { name: 'Timetable',    path: '/dashboard/parent/timetable', icon: '▦' },
-            { name: 'Homework',     path: '/dashboard/parent/homework',   icon: '◉' },
-            { name: 'Fee Status',   path: '/dashboard/parent/fees',       icon: '◆' },
-            { name: 'Notices',      path: '/dashboard/parent/notices',    icon: '◎' },
-            { name: 'Talent Tests', path: '/dashboard/parent/talent',     icon: '★' },
+            { name: 'Dashboard', path: '/dashboard/parent', icon: '◈' },
+            { name: 'Child Profile', path: '/dashboard/parent/profile', icon: '◉' },
+            { name: 'Attendance', path: '/dashboard/parent/attendance', icon: '◷' },
+            { name: 'Exam Results', path: '/dashboard/parent/results', icon: '◈' },
+            { name: 'Timetable', path: '/dashboard/parent/timetable', icon: '▦' },
+            { name: 'Homework', path: '/dashboard/parent/homework', icon: '◉' },
+            { name: 'Fee Status', path: '/dashboard/parent/fees', icon: '◆' },
+            { name: 'Notices', path: '/dashboard/parent/notices', icon: '◎' },
+            { name: 'Talent Tests', path: '/dashboard/parent/talent', icon: '★' },
         ],
     },
 };
@@ -852,7 +862,7 @@ const ROLE_META = {
 function Sidebar({ meta, collapsed, setCollapsed, navLinks, pendingCount }) {
     const location = useLocation();
     const [hov, setHov] = useState(null);
-    const [openMenu, setOpenMenu] = useState(null); 
+    const [openMenu, setOpenMenu] = useState(null);
 
     return (
         <aside style={{
@@ -917,16 +927,16 @@ function Sidebar({ meta, collapsed, setCollapsed, navLinks, pendingCount }) {
             }}>
                 {navLinks.map((link, index) => {
                     const isDropdown = !!link.children;
-                    
+
                     // Logic to determine active states
                     const isActiveParent = link.path && location.pathname === link.path;
                     const isChildActive = isDropdown && link.children.some(c => location.pathname === c.path);
-                    
+
                     const isActive = isDropdown ? isActiveParent : location.pathname === link.path;
                     const isDropdownOpen = openMenu === index || isChildActive || isActiveParent;
-                    
-                    const isHov    = hov === link.name;
-                    const badge    = link.badge ? pendingCount : 0;
+
+                    const isHov = hov === link.name;
+                    const badge = link.badge ? pendingCount : 0;
 
                     // Reusable Link Item Styles
                     const linkStyle = {
@@ -937,9 +947,10 @@ function Sidebar({ meta, collapsed, setCollapsed, navLinks, pendingCount }) {
                         margin: '1px 8px',
                         borderRadius: 8,
                         cursor: 'pointer',
-                        background: isActive ? meta.color + '18' : isHov ? C.surfaceAlt : 'transparent',
-                        borderLeft: isActive ? `2px solid ${meta.color}` : '2px solid transparent',
-                        transition: 'all 0.15s ease',
+                        // Use soft purple-indigo background for hover/active state
+                        background: isActive ? C.surfaceAlt : isHov ? C.surfaceAlt : 'transparent',
+                        borderLeft: isActive ? `3px solid ${meta.color}` : '3px solid transparent',
+                        transition: 'all 0.2s ease',
                         justifyContent: collapsed ? 'center' : 'flex-start',
                         textDecoration: 'none',
                         position: 'relative',
@@ -948,9 +959,9 @@ function Sidebar({ meta, collapsed, setCollapsed, navLinks, pendingCount }) {
                     const textStyle = {
                         fontSize: 13,
                         color: isActive ? meta.color : C.textMuted,
-                        fontWeight: isActive ? 700 : 400,
+                        fontWeight: isActive ? 700 : 500, // Make links slightly bolder by default
                         whiteSpace: 'nowrap',
-                        fontFamily: "'DM Sans', sans-serif",
+                        fontFamily: "'Inter', sans-serif",
                         flex: 1,
                     };
 
@@ -965,9 +976,8 @@ function Sidebar({ meta, collapsed, setCollapsed, navLinks, pendingCount }) {
                     if (isDropdown) {
                         return (
                             <div key={link.name}>
-                                {/* Dropdown Parent Menu - wraps in a <Link> so it triggers routing */}
-                                <Link
-                                    to={link.path || '#'}
+                                {/* Dropdown Parent Menu - acts as a toggle */}
+                                <div
                                     title={collapsed ? link.name : ''}
                                     onMouseEnter={() => setHov(link.name)}
                                     onMouseLeave={() => setHov(null)}
@@ -975,7 +985,7 @@ function Sidebar({ meta, collapsed, setCollapsed, navLinks, pendingCount }) {
                                         if (collapsed) setCollapsed(false);
                                         setOpenMenu(isDropdownOpen ? null : index);
                                     }}
-                                    style={linkStyle}
+                                    style={{ ...linkStyle, userSelect: 'none' }}
                                 >
                                     <span style={iconStyle}>{link.icon}</span>
                                     {!collapsed && (
@@ -986,7 +996,7 @@ function Sidebar({ meta, collapsed, setCollapsed, navLinks, pendingCount }) {
                                             </span>
                                         </>
                                     )}
-                                </Link>
+                                </div>
 
                                 {/* Dropdown Children */}
                                 {isDropdownOpen && !collapsed && (
@@ -994,7 +1004,7 @@ function Sidebar({ meta, collapsed, setCollapsed, navLinks, pendingCount }) {
                                         {link.children.map((child) => {
                                             const isChildCurrent = location.pathname === child.path;
                                             const isChildHov = hov === child.name;
-                                            
+
                                             return (
                                                 <Link
                                                     key={child.name}
@@ -1005,13 +1015,13 @@ function Sidebar({ meta, collapsed, setCollapsed, navLinks, pendingCount }) {
                                                         display: 'flex', alignItems: 'center', gap: 10,
                                                         padding: '7px 14px', margin: '1px 8px', borderRadius: 8,
                                                         cursor: 'pointer', textDecoration: 'none',
-                                                        background: isChildCurrent ? meta.color + '18' : isChildHov ? C.surfaceAlt : 'transparent',
-                                                        borderLeft: isChildCurrent ? `2px solid ${meta.color}` : '2px solid transparent',
-                                                        transition: 'all 0.15s ease'
+                                                        background: isChildCurrent ? C.surfaceAlt : isChildHov ? C.surfaceAlt : 'transparent',
+                                                        borderLeft: isChildCurrent ? `3px solid ${meta.color}` : '3px solid transparent',
+                                                        transition: 'all 0.2s ease'
                                                     }}
                                                 >
-                                                    <span style={{...iconStyle, fontSize: 13, color: isChildCurrent ? meta.color : C.textMuted }}>{child.icon}</span>
-                                                    <span style={{...textStyle, color: isChildCurrent ? meta.color : C.textMuted, fontWeight: isChildCurrent ? 700 : 400}}>{child.name}</span>
+                                                    <span style={{ ...iconStyle, fontSize: 13, color: isChildCurrent ? meta.color : C.textMuted }}>{child.icon}</span>
+                                                    <span style={{ ...textStyle, color: isChildCurrent ? meta.color : C.textMuted, fontWeight: isChildCurrent ? 700 : 400 }}>{child.name}</span>
                                                 </Link>
                                             )
                                         })}
@@ -1089,10 +1099,10 @@ function Sidebar({ meta, collapsed, setCollapsed, navLinks, pendingCount }) {
 
 // ─── TOPBAR ───────────────────────────────────────────────────────────────────
 function Topbar({ user, meta, onToggle, pendingCount, onLogout }) {
-    const [showNotif,   setShowNotif]   = useState(false);
+    const [showNotif, setShowNotif] = useState(false);
     // Replace with your actual hook if you have it available:
     // const { notifs, unread, markRead }  = useNotifications();
-    const notifs = []; const unread = 0; const markRead = () => {}; 
+    const notifs = []; const unread = 0; const markRead = () => { };
     const [showProfile, setShowProfile] = useState(false);
     const location = useLocation();
 
@@ -1209,14 +1219,14 @@ function Topbar({ user, meta, onToggle, pendingCount, onLogout }) {
                         borderRadius: 12, padding: 12,
                         zIndex: 100, boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
                     }}>
-                        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
-                            <div style={{ fontSize:11, fontWeight:700, color:C.textMuted, letterSpacing:'0.08em' }}>
-                                NOTIFICATIONS {unread > 0 && <span style={{ background:C.danger, color:'#fff', borderRadius:20, padding:'1px 6px', fontSize:10, marginLeft:4 }}>{unread}</span>}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                            <div style={{ fontSize: 11, fontWeight: 700, color: C.textMuted, letterSpacing: '0.08em' }}>
+                                NOTIFICATIONS {unread > 0 && <span style={{ background: C.danger, color: '#fff', borderRadius: 20, padding: '1px 6px', fontSize: 10, marginLeft: 4 }}>{unread}</span>}
                             </div>
-                            {unread > 0 && <button onClick={markRead} style={{ fontSize:10, color:C.accent, background:'none', border:'none', cursor:'pointer', padding:0 }}>Mark all read</button>}
+                            {unread > 0 && <button onClick={markRead} style={{ fontSize: 10, color: C.accent, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Mark all read</button>}
                         </div>
                         {notifs.length === 0 ? (
-                            <div style={{ textAlign:'center', padding:'20px 0', color:C.textMuted, fontSize:12 }}>
+                            <div style={{ textAlign: 'center', padding: '20px 0', color: C.textMuted, fontSize: 12 }}>
                                 No notifications yet
                             </div>
                         ) : notifs.map((n, i) => (
@@ -1227,8 +1237,8 @@ function Topbar({ user, meta, onToggle, pendingCount, onLogout }) {
                             }}>
                                 <div style={{ fontSize: 12, color: C.text, fontWeight: n.read ? 400 : 600 }}>{n.msg}</div>
                                 <div style={{ fontSize: 10, color: C.textMuted, marginTop: 2 }}>
-                                    {n.time ? new Date(n.time).toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' }) : ''}
-                                    {n.type === 'announcement' && <span style={{ color:C.accent, marginLeft:6 }}>📢 Announcement</span>}
+                                    {n.time ? new Date(n.time).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : ''}
+                                    {n.type === 'announcement' && <span style={{ color: C.accent, marginLeft: 6 }}>📢 Announcement</span>}
                                 </div>
                             </div>
                         ))}
@@ -1258,7 +1268,7 @@ function Topbar({ user, meta, onToggle, pendingCount, onLogout }) {
                             ? <img src={user.profilePhotoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                             : <span style={{ fontSize: 13, color: '#fff', fontWeight: 800, fontFamily: "'Syne', sans-serif" }}>
                                 {user?.name?.charAt(0)?.toUpperCase()}
-                              </span>
+                            </span>
                         }
                     </div>
                     <div style={{ textAlign: 'left' }}>
@@ -1281,8 +1291,8 @@ function Topbar({ user, meta, onToggle, pendingCount, onLogout }) {
                     }}>
                         {[
                             { label: 'My Profile', to: '/profile', danger: false },
-                            { label: 'Settings',   to: '#',        danger: false },
-                            { label: 'Logout',     to: null,       danger: true  },
+                            { label: 'Settings', to: '#', danger: false },
+                            { label: 'Logout', to: null, danger: true },
                         ].map((item, i, arr) => (
                             item.to === null
                                 ? <div
@@ -1295,9 +1305,9 @@ function Topbar({ user, meta, onToggle, pendingCount, onLogout }) {
                                     }}
                                     onMouseEnter={e => e.currentTarget.style.background = C.dangerDim}
                                     onMouseLeave={e => e.currentTarget.style.background = 'none'}
-                                  >
+                                >
                                     {item.label}
-                                  </div>
+                                </div>
                                 : <Link
                                     key={i}
                                     to={item.to}
@@ -1311,9 +1321,9 @@ function Topbar({ user, meta, onToggle, pendingCount, onLogout }) {
                                     }}
                                     onMouseEnter={e => e.currentTarget.style.background = C.surfaceAlt}
                                     onMouseLeave={e => e.currentTarget.style.background = 'none'}
-                                  >
+                                >
                                     {item.label}
-                                  </Link>
+                                </Link>
                         ))}
                     </div>
                 )}
@@ -1326,11 +1336,11 @@ function Topbar({ user, meta, onToggle, pendingCount, onLogout }) {
 // DASHBOARD LAYOUT
 // ═══════════════════════════════════════════════════════════════════════════════
 export function DashboardLayout() {
-    const user     = useSelector(selectCurrentUser);
+    const user = useSelector(selectCurrentUser);
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
-    const [collapsed,    setCollapsed]    = useState(false);
+    const [collapsed, setCollapsed] = useState(false);
     const [pendingCount, setPendingCount] = useState(); // TODO: fetch real count from API
 
     const handleLogout = () => {
@@ -1354,13 +1364,13 @@ export function DashboardLayout() {
     return (
         <>
             <style>{`
-                @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap');
+                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
                 *, *::before, *::after { box-sizing: border-box; }
                 body {
                     margin: 0; padding: 0;
                     background: ${C.bg};
                     color: ${C.text};
-                    font-family: 'DM Sans', sans-serif;
+                    font-family: 'Inter', sans-serif;
                 }
                 ::-webkit-scrollbar { width: 5px; height: 5px; }
                 ::-webkit-scrollbar-track { background: transparent; }

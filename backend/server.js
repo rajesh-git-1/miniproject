@@ -45,12 +45,12 @@
 // app.post('/api/auth/register', async (req, res) => {
 //   try {
 //     const PendingRegistration = require('./models/PendingRegistration');
-    
+
 //     const newReg = await PendingRegistration.create({
 //       ...req.body,
 //       status: 'Pending' 
 //     });
-    
+
 //     return res.json({ 
 //       success: true, 
 //       message: "Registration submitted successfully! Please wait for Admin approval." 
@@ -81,11 +81,31 @@ import cors from 'cors';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 import bcrypt from 'bcryptjs';
+import multer from 'multer';
+import fs from 'fs';
+import path from 'path';
+
+const uploadDir = 'uploads/';
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, 'uploads/'),
+  filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname))
+});
+const upload = multer({ storage: storage });
+
+const generateSequentialId = async (Model, prefix, fieldName) => {
+  const lastDoc = await Model.findOne({}, { [fieldName]: 1 }).sort({ _id: -1 });
+  if (!lastDoc || !lastDoc[fieldName]) return `${prefix}-1001`;
+  const match = lastDoc[fieldName].match(/\d+$/);
+  if (match) return `${prefix}-${parseInt(match[0], 10) + 1}`;
+  return `${prefix}-1001`;
+};
 import principalRoutes from './routes/principal.js';
 import studentRoutes from './routes/studentRoutes.js';
 import teacherRoutes from './routes/teacherRoutes.js';
 // Import your routes and models
-import apiRoutes from './routes/index.js'; 
+import apiRoutes from './routes/index.js';
 import { PendingRegistration, User, Student, Teacher, Class } from './models/index.js';
 import inventoryRoutes from './routes/inventoryRoutes.js'; // Note the .js at the end
 import registrationRoutes from './routes/registrationRoutes.js';
@@ -125,30 +145,60 @@ app.post('/api/auth/login', async (req, res) => {
 
     // 3. Generate a token using their REAL MongoDB _id
     const token = jwt.sign(
-      { _id: user._id, role: user.role, name: user.name, email: user.email }, 
-      secretKey, 
+      { _id: user._id, role: user.role, name: user.name, email: user.email },
+      secretKey,
       { expiresIn: '1d' }
     );
 
     return res.json({ success: true, message: "Login successful!", user, token });
   } catch (error) {
-    console.error("Login Error:", error);
-    return res.status(500).json({ success: false, message: "Server error during login" });
+    console.error("Login Error:", error.message, error.stack);
+    return res.status(500).json({ success: false, message: error.message || "Server error during login" });
   }
 });
 
-// ─── 2. ADMIN USER CREATION ROUTE (Bypasses Pending — Creates permanently) ───
-app.post('/api/auth/register', async (req, res) => {
+// ─── 2. PUBLIC REGISTRATION ROUTE (Goes to Pending) ───
+app.post('/api/public/register', async (req, res) => {
+  try {
+    const newReg = await PendingRegistration.create({
+      ...req.body,
+      status: 'Pending'
+    });
+    return res.json({ success: true, message: "Registration submitted successfully! Please wait for Admin approval." });
+  } catch (error) {
+    console.error("Public Registration Error:", error);
+    return res.status(500).json({ success: false, message: "Failed to register. " + error.message });
+  }
+});
+
+// ─── 3. ADMIN USER CREATION ROUTE (Bypasses Pending — Creates permanently) ───
+app.post('/api/admin/users/create', upload.single('profilePhoto'), async (req, res) => {
   try {
     const { role, name, email, mobile, address, classId,
-            // Student fields
-            parentName, parentPhone, gender, dob, bloodGroup, house, admissionDate,
-            // Teacher fields
-            teacherId, qualification, department, experience, joiningDate, salary, designation, subjects
-          } = req.body;
+      // Student fields
+      parentName, parentPhone, gender, dob, bloodGroup, house, admissionDate,
+      // Teacher fields
+      teacherId, qualification, department, experience, joiningDate, salary, designation, subjects
+    } = req.body;
 
-    if (!name || !email || !role) {
-      return res.status(400).json({ success: false, message: 'Name, email and role are required.' });
+    if (!name || !email || !role || !mobile || !address) {
+      return res.status(400).json({ success: false, message: 'All basic fields are required.' });
+    }
+    if (!/^\d{10}$/.test(mobile)) {
+      return res.status(400).json({ success: false, message: 'Mobile number must be exactly 10 digits.' });
+    }
+
+    if (role === 'Student') {
+      if (!classId || !parentName || !gender || !dob || !admissionDate) {
+        return res.status(400).json({ success: false, message: 'All student fields are required.' });
+      }
+      if (parentPhone && !/^\d{10}$/.test(parentPhone)) {
+        return res.status(400).json({ success: false, message: 'Parent phone must be exactly 10 digits.' });
+      }
+    } else if (role === 'Teacher') {
+      if (!qualification || !department || experience === undefined || !joiningDate) {
+        return res.status(400).json({ success: false, message: 'All teacher fields are required.' });
+      }
     }
 
     // Check for duplicate email in User collection
@@ -182,12 +232,12 @@ app.post('/api/auth/register', async (req, res) => {
         const classDoc = await Class.findById(classId);
         if (classDoc) {
           standard = classDoc.standard || '';
-          section  = classDoc.section  || '';
+          section = classDoc.section || '';
         }
       }
 
       // Auto-generate unique roll number
-      const rollNo = `S-${Date.now().toString().slice(-7)}`;
+      const rollNo = await generateSequentialId(Student, 'S', 'rollNo');
 
       profile = await Student.create({
         name,
@@ -205,6 +255,7 @@ app.post('/api/auth/register', async (req, res) => {
         section,
         rollNo,
         feeStatus: 'Pending',
+        profilePhotoUrl: req.file ? `http://localhost:5000/uploads/${req.file.filename}` : '',
         isActive: true,
       });
 
@@ -216,7 +267,7 @@ app.post('/api/auth/register', async (req, res) => {
       }
 
     } else if (role === 'Teacher') {
-      const autoTeacherId = teacherId || `T-${Date.now().toString().slice(-7)}`;
+      const autoTeacherId = teacherId || await generateSequentialId(Teacher, 'T', 'teacherId');
 
       profile = await Teacher.create({
         name,
@@ -229,6 +280,7 @@ app.post('/api/auth/register', async (req, res) => {
         experience: experience ? Number(experience) : 0,
         salary: salary ? Number(salary) : 0,
         subjects: subjects || [],
+        profilePhotoUrl: req.file ? `http://localhost:5000/uploads/${req.file.filename}` : '',
         isActive: true,
       });
     }

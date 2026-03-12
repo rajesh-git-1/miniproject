@@ -158,24 +158,6 @@
 // import RegisterPage       from './pages/RegisterPage';
 // import DashboardLayout    from './layouts/DashboardLayout';
 // import AdminDashboard     from './pages/AdminDashboard';
-// import StudentDashboard   from './pages/StudentDashboard';
-// import TeacherDashboard   from './pages/TeacherDashboard';
-// import PrincipalDashboard from './pages/PrincipalDashboard';
-// import UserProfile        from './pages/UserProfile';
-
-// // All module pages
-// import {
-//   AdminDashboardPage,RegistrationsPage,UserCreationPage,InventoryPage,StudentsPage, TeachersPage, ClassesPage,
-//   AttendancePage, ExaminationsPage, TimetablePage,
-//   FeesPage, HomeworkPage, LibraryPage,
-//   AnnouncementsPage, TransportPage, LeavePage,
-//   PayrollPage, ActivityLogsPage, TalentTestsPage, ReportsPage,
-// } from './pages/modules';
-
-// function App() {
-//   return (
-//     <Router>
-//       <Routes>
 //         {/* ── 1. PUBLIC ROUTES ── */}
 //         <Route path="/" element={<MasterLandingPage />} />
 //         <Route path="/school/:schoolCode/login" element={<LoginPage />} />
@@ -293,7 +275,9 @@ import {
   InventoryPage,
   StudentsPage, 
   TeachersPage, 
-  ClassesPage,
+  ClassesViewPage,
+  ClassesCreatePage,
+  HousesCreatePage,
   AttendancePage, 
   ExaminationsPage, 
   TimetablePage,
@@ -318,10 +302,10 @@ function App() {
         <Route path="/school/:schoolCode/login" element={<LoginPage />} />
         <Route path="/school/:schoolCode/register" element={<RegisterPage />} />
 
-        {/* ── 2. NON-ADMIN DASHBOARDS ── */}
-        <Route path="/dashboard/principal" element={<PrincipalDashboard />} />
-        <Route path="/dashboard/teacher" element={<TeacherDashboard />} />
-        <Route path="/dashboard/student" element={<StudentDashboard />} />
+        {/* ── 2. NON-ADMIN DASHBOARDS ── (moved under DashboardLayout) */}
+        {/* <Route path="/dashboard/principal" element={<PrincipalDashboard />} /> */}
+        {/* <Route path="/dashboard/teacher" element={<TeacherDashboard />} /> */}
+        {/* <Route path="/dashboard/student" element={<StudentDashboard />} /> */}
 
         {/* ── 3. ADMIN DASHBOARD LAYOUT & ROUTES ── */}
         <Route path="/" element={<DashboardLayout />}>
@@ -337,7 +321,9 @@ function App() {
           {/* Your existing working pages */}
           <Route path="dashboard/admin/students"        element={<StudentsPage />} />
           <Route path="dashboard/admin/teachers"        element={<TeachersPage />} />
-          <Route path="dashboard/admin/classes"         element={<ClassesPage />} />
+          <Route path="dashboard/admin/classes/view"    element={<ClassesViewPage />} />
+          <Route path="dashboard/admin/classes/create"  element={<ClassesCreatePage />} />
+          <Route path="dashboard/admin/classes/houses"  element={<HousesCreatePage />} />
           <Route path="dashboard/admin/attendance"      element={<AttendancePage />} />
           <Route path="dashboard/admin/exams"           element={<ExaminationsPage />} />
           <Route path="dashboard/admin/timetable"       element={<TimetablePage />} />
@@ -351,6 +337,10 @@ function App() {
           <Route path="dashboard/admin/leave"           element={<LeavePage />} />
           <Route path="dashboard/admin/payroll"         element={<PayrollPage />} />
           <Route path="dashboard/admin/logs"            element={<ActivityLogsPage />} />
+          {/* Added non-admin dashboards under shared layout */}
+          <Route path="dashboard/principal" element={<PrincipalDashboard />} />
+          <Route path="dashboard/teacher" element={<TeacherDashboard />} />
+          <Route path="dashboard/student" element={<StudentDashboard />} />
 
         </Route>
 
