@@ -15,7 +15,7 @@ const userSchema = new mongoose.Schema({
     address: { type: String },
     username: { type: String }
 
-}, { timestamps: true });
+}, { timestamps: true, collection: 'abhyaas_users' });
 
 // Ensure email is unique per school (tenant isolation)
 userSchema.index({ email: 1, school_id: 1 }, { unique: true });

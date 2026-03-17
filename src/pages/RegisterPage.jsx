@@ -30,10 +30,43 @@ const RegisterPage = () => {
     const [loading, setLoading] = useState(false);
     const [successMsg, setSuccessMsg] = useState('');
     const [errorMsg, setErrorMsg] = useState('');
+    const [errors, setErrors] = useState({});
 
     const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        let { name, value } = e.target;
+        let newErrors = { ...errors };
+
+        if (e.target.type === 'tel' || name === 'mobile' || name === 'officeContact') {
+            value = value.replace(/\D/g, '').slice(0, 10);
+            if (value && value.length !== 10) newErrors[name] = 'Phone number must be exactly 10 digits';
+            else delete newErrors[name];
+        }
+
+        if (name === 'password') {
+            const pwdRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+            if (value && !pwdRegex.test(value)) newErrors.password = 'Min 8 chars, 1 uppercase, 1 lowercase, 1 number, & 1 special char required';
+            else delete newErrors.password;
+        }
+
+        setErrors(newErrors);
+        setFormData(prev => ({ ...prev, [name]: value }));
     };
+
+    const isFormValid = (() => {
+        if (Object.keys(errors).length > 0) return false;
+        if (!formData.name || !formData.email || !formData.password || !formData.role) return false;
+
+        if (formData.role === 'Student') {
+            if (!formData.rollNo || !formData.fatherName || !formData.motherName || !formData.dob || !formData.gender || !formData.className || !formData.section || !formData.admissionDate || !formData.mobile || !formData.address) return false;
+        } else if (formData.role === 'Teacher') {
+            if (!formData.teacherId || !formData.qualification || !formData.department || !formData.experience || !formData.joiningDate || !formData.mobile || !formData.address || !formData.username) return false;
+        } else if (formData.role === 'Admin') {
+            if (!formData.adminId || !formData.position || !formData.mobile || !formData.username || !formData.accessLevel) return false;
+        } else if (formData.role === 'Principal') {
+            if (!formData.principalId || !formData.qualification || !formData.experience || !formData.joiningDate || !formData.officeContact || !formData.username || !formData.officeAddress) return false;
+        }
+        return true;
+    })();
 
     const handleFileChange = (e) => {
         const file = e.target.files[0];
@@ -84,7 +117,7 @@ const RegisterPage = () => {
         }
 
         try {
-            const response = await fetch('/api/auth/register', {
+            const response = await fetch('/api/public/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -107,16 +140,26 @@ const RegisterPage = () => {
     };
 
     // Helper to render the common input style
-    const renderInput = (name, placeholder, type = "text", required = false) => (
-        <div className="form-group">
-            <label className="form-label" htmlFor={name}>{placeholder} {required && '*'}</label>
-            <input
-                type={type} name={name} value={formData[name] || ''} onChange={handleChange} required={required}
-                className="form-input"
-                placeholder={`Enter ${placeholder}`}
-            />
-        </div>
-    );
+    const renderInput = (name, placeholder, type = "text", required = false, pattern) => {
+        let maxLen = undefined;
+        if (['name', 'fatherName', 'motherName', 'username'].includes(name)) maxLen = 50;
+        else if (name === 'email') maxLen = 100;
+        else if (name === 'address' || name === 'officeAddress') maxLen = 200;
+
+        return (
+            <div className="form-group">
+                <label className="block font-semibold mb-2 text-sm text-slate-700" htmlFor={name}>{placeholder} {required && <span className="text-red-500">*</span>}</label>
+                <input
+                    type={type} name={name} value={formData[name] || ''} onChange={handleChange} required={required}
+                    pattern={pattern}
+                    maxLength={maxLen || (type === 'tel' ? 10 : undefined)}
+                    className="w-full px-4 py-3 border border-slate-200 rounded-lg text-slate-800 bg-slate-50 transition-all duration-200 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-400 focus:border-sky-400 shadow-sm"
+                    placeholder={`Enter ${placeholder}`}
+                />
+                {errors[name] && <div className="text-red-500 text-xs mt-1">{errors[name]}</div>}
+            </div>
+        );
+    };
 
     // Render Role-Specific Fields
     const renderDynamicFields = () => {
@@ -125,32 +168,32 @@ const RegisterPage = () => {
                 return (
                     <>
                         {renderInput('rollNo', 'Student ID / Roll No', 'text', true)}
-                        {renderInput('fatherName', 'Father Name')}
-                        {renderInput('motherName', 'Mother Name')}
+                        {renderInput('fatherName', 'Father Name', 'text', true)}
+                        {renderInput('motherName', 'Mother Name', 'text', true)}
                         {renderInput('dob', 'Date of Birth', 'date', true)}
                         <div className="form-group">
-                            <label className="form-label">Gender *</label>
-                            <select name="gender" value={formData.gender} onChange={handleChange} required className="form-input">
+                            <label className="block font-semibold mb-2 text-sm text-slate-700">Gender <span className="text-red-500">*</span></label>
+                            <select name="gender" value={formData.gender} onChange={handleChange} required className="w-full px-4 py-3 border border-slate-200 rounded-lg text-slate-800 bg-slate-50 transition-all duration-200 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-400 focus:border-sky-400 shadow-sm">
                                 <option value="">Select Gender</option><option value="Male">Male</option><option value="Female">Female</option>
                             </select>
                         </div>
                         {renderInput('className', 'Class', 'text', true)}
-                        {renderInput('section', 'Section')}
-                        {renderInput('admissionDate', 'Admission Date', 'date')}
-                        {renderInput('mobile', 'Mobile Number')}
-                        {renderInput('address', 'Address')}
+                        {renderInput('section', 'Section', 'text', true)}
+                        {renderInput('admissionDate', 'Admission Date', 'date', true)}
+                        {renderInput('mobile', 'Mobile Number', 'tel', true, '[0-9]{10}')}
+                        {renderInput('address', 'Address', 'text', true)}
                     </>
                 );
             case 'Teacher':
                 return (
                     <>
                         {renderInput('teacherId', 'Teacher ID', 'text', true)}
-                        {renderInput('qualification', 'Qualification')}
+                        {renderInput('qualification', 'Qualification', 'text', true)}
                         {renderInput('department', 'Subject / Department', 'text', true)}
-                        {renderInput('experience', 'Experience (Years)', 'number')}
-                        {renderInput('joiningDate', 'Date of Joining', 'date')}
-                        {renderInput('mobile', 'Mobile Number')}
-                        {renderInput('address', 'Address')}
+                        {renderInput('experience', 'Experience (Years)', 'number', true)}
+                        {renderInput('joiningDate', 'Date of Joining', 'date', true)}
+                        {renderInput('mobile', 'Mobile Number', 'tel', true, '[0-9]{10}')}
+                        {renderInput('address', 'Address', 'text', true)}
                         {renderInput('salary', 'Salary (Optional)', 'number')}
                         {renderInput('username', 'Username', 'text', true)}
                     </>
@@ -159,12 +202,12 @@ const RegisterPage = () => {
                 return (
                     <>
                         {renderInput('adminId', 'Admin ID', 'text', true)}
-                        {renderInput('position', 'Role / Position')}
-                        {renderInput('mobile', 'Mobile No.')}
+                        {renderInput('position', 'Role / Position', 'text', true)}
+                        {renderInput('mobile', 'Mobile No.', 'tel', true, '[0-9]{10}')}
                         {renderInput('username', 'Username', 'text', true)}
-                        <div className="sm:col-span-2 form-group">
-                            <label className="form-label">Access Level *</label>
-                            <select name="accessLevel" value={formData.accessLevel} onChange={handleChange} required className="form-input">
+                        <div className="md:col-span-2 form-group">
+                            <label className="block font-semibold mb-2 text-sm text-slate-700">Access Level <span className="text-red-500">*</span></label>
+                            <select name="accessLevel" value={formData.accessLevel} onChange={handleChange} required className="w-full px-4 py-3 border border-slate-200 rounded-lg text-slate-800 bg-slate-50 transition-all duration-200 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-400 focus:border-sky-400 shadow-sm">
                                 <option value="">Select Access Level</option><option value="Super Admin">Super Admin</option><option value="Staff Admin">Staff Admin</option>
                             </select>
                         </div>
@@ -174,12 +217,12 @@ const RegisterPage = () => {
                 return (
                     <>
                         {renderInput('principalId', 'Principal ID', 'text', true)}
-                        {renderInput('qualification', 'Qualification')}
-                        {renderInput('experience', 'Experience (Years)')}
-                        {renderInput('joiningDate', 'Date of Joining', 'date')}
-                        {renderInput('officeContact', 'Office Contact No.')}
+                        {renderInput('qualification', 'Qualification', 'text', true)}
+                        {renderInput('experience', 'Experience (Years)', 'number', true)}
+                        {renderInput('joiningDate', 'Date of Joining', 'date', true)}
+                        {renderInput('officeContact', 'Office Contact No.', 'tel', true, '[0-9]{10}')}
                         {renderInput('username', 'Username', 'text', true)}
-                        <div className="sm:col-span-2">{renderInput('officeAddress', 'Office Address')}</div>
+                        <div className="sm:col-span-2">{renderInput('officeAddress', 'Office Address', 'text', true)}</div>
                     </>
                 );
             default:
@@ -189,20 +232,17 @@ const RegisterPage = () => {
 
     if (successMsg) {
         return (
-            <div className="app-layout items-center justify-center p-4">
-                <div className="card w-full max-w-md text-center space-y-6 border-green-100">
+            <div className="flex min-h-screen w-full items-center justify-center p-4 bg-sky-50">
+                <div className="w-full max-w-md text-center space-y-6 bg-white p-8 rounded-2xl shadow-lg shadow-slate-200/50">
                     <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100">
                         <svg className="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
                     </div>
-                    <h2 className="text-2xl font-bold text-gray-900">Success!</h2>
-                    <p className="text-gray-600">{successMsg}</p>
+                    <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Success!</h2>
+                    <p className="text-slate-600">{successMsg}</p>
                     <div className="pt-4">
-                        {/* <Link to={`/school/${schoolCode}/login`} className="btn btn-primary">
-                            Return to Login
-                        </Link> */}
-                        <Link to="/" className="btn btn-primary">
-    Return to Home
-</Link>
+                        <Link to="/" className="inline-flex items-center justify-center px-6 py-3 font-semibold text-sm rounded-lg transition-all duration-300 ease-in-out bg-sky-500 text-white shadow-md hover:bg-sky-600 hover:-translate-y-1 hover:shadow-lg hover:shadow-sky-200/50">
+                            Return to Home
+                        </Link>
                     </div>
                 </div>
             </div>
@@ -210,11 +250,11 @@ const RegisterPage = () => {
     }
 
     return (
-        <div className="app-layout items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-            <div className="card w-full max-w-3xl space-y-8">
+        <div className="flex min-h-screen w-full items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-sky-50 text-slate-800">
+            <div className="w-full max-w-3xl space-y-8 bg-white p-8 md:p-10 rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-100">
                 <div>
-                    <h2 className="text-center text-3xl font-extrabold text-gray-900">Create an Account</h2>
-                    <p className="mt-2 text-center text-sm text-gray-600">
+                    <h2 className="text-center text-3xl font-extrabold text-slate-800 tracking-tight">Create an Account</h2>
+                    <p className="mt-2 text-center text-sm text-slate-500">
                         {/* For portal: <span className="font-semibold text-primary uppercase">{schoolCode}</span> */}
                     </p>
                 </div>
@@ -227,12 +267,12 @@ const RegisterPage = () => {
                     )}
 
                     {/* CORE FIELDS */}
-                    <div className="border-b border-gray-200 pb-6">
-                        <h3 className="text-lg font-medium text-gray-900 mb-4">Basic Information</h3>
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                            <div className="sm:col-span-2 form-group">
-                                <label className="form-label" htmlFor="role">Sign Up As *</label>
-                                <select name="role" required value={formData.role} onChange={handleChange} className="form-input">
+                    <div className="border-b border-gray-100 pb-8">
+                        <h3 className="text-lg font-bold text-slate-800 mb-5 pb-2 border-b border-sky-50">Basic Information</h3>
+                        <div className="flex flex-col md:grid md:grid-cols-2 gap-4 md:gap-6">
+                            <div className="md:col-span-2 form-group">
+                                <label className="block font-semibold mb-2 text-sm text-slate-700" htmlFor="role">Sign Up As <span className="text-red-500">*</span></label>
+                                <select name="role" required value={formData.role} onChange={handleChange} className="w-full px-4 py-3 border border-slate-200 rounded-lg text-slate-800 bg-slate-50 transition-all duration-200 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-400 focus:border-sky-400 shadow-sm">
                                     <option value="Student">Student</option>
                                     <option value="Teacher">Teacher</option>
                                     <option value="Admin">Admin</option>
@@ -244,35 +284,35 @@ const RegisterPage = () => {
                             {renderInput('email', 'Email Address', 'email', true)}
                             {renderInput('password', 'Password', 'password', true)}
 
-                            <div className="sm:col-span-2 mt-2 form-group">
-                                <label className="form-label" htmlFor="profilePhoto">Profile Photo</label>
+                            <div className="md:col-span-2 form-group">
+                                <label className="block font-semibold mb-2 text-sm text-slate-700" htmlFor="profilePhoto">Profile Photo</label>
                                 <input type="file" name="profilePhoto" onChange={handleFileChange} accept="image/*"
-                                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 transition-colors" />
+                                    className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-bold file:bg-sky-50 file:text-sky-600 hover:file:bg-sky-100 transition-colors cursor-pointer" />
                             </div>
                         </div>
                     </div>
 
                     {/* DYNAMIC ROLE FIELDS */}
                     <div className="pt-2">
-                        <h3 className="text-lg font-medium text-gray-900 mb-4">{formData.role} Details</h3>
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <h3 className="text-lg font-bold text-slate-800 mb-5 pb-2 border-b border-sky-50">{formData.role} Details</h3>
+                        <div className="flex flex-col md:grid md:grid-cols-2 gap-4 md:gap-6">
                             {renderDynamicFields()}
                         </div>
                     </div>
 
-                    <div className="pt-6">
-                        <button type="submit" disabled={loading} className={`btn btn-primary w-full ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}>
+                    <div className="pt-8 mt-4">
+                        <button type="submit" disabled={loading || !isFormValid} className={`w-full inline-flex items-center justify-center px-6 py-4 font-bold text-base rounded-xl transition-all duration-300 ease-in-out bg-sky-500 text-white shadow-md hover:bg-sky-600 hover:-translate-y-1 hover:shadow-xl hover:shadow-sky-200/60 ${loading || !isFormValid ? 'opacity-50 cursor-not-allowed transform-none hover:translate-y-0 hover:shadow-md' : ''}`}>
                             {loading ? 'Submitting...' : `Register as ${formData.role}`}
                         </button>
                     </div>
                 </form>
 
-                <div className="text-center mt-4">
-                    <p className="text-sm text-gray-600">
+                <div className="text-center mt-6">
+                    <p className="text-sm text-slate-500">
                         Already have an account?{' '}
-                        <Link to="/" className="btn btn-primary">
-    Return to Home
-</Link>
+                        <Link to="/" className="text-sky-600 font-bold hover:text-sky-700 hover:underline transition-colors">
+                            Return to Login
+                        </Link>
                     </p>
                 </div>
             </div>

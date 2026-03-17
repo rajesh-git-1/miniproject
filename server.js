@@ -32,20 +32,20 @@
 // app.listen(PORT, () => console.log(`🚀 Backend Server running on port ${PORT}`));
 // server.js — Abhyaas School ERP Backend
 require('dotenv').config();
-const express    = require('express');
-const mongoose   = require('mongoose');
-const cors       = require('cors');
-const bcrypt     = require('bcryptjs');
-const jwt        = require('jsonwebtoken');
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const { User, PendingRegistration, ActivityLog } = require('./models');
 
-const app  = express();
+const app = express();
 const PORT = process.env.PORT || 5000;
 const JWT_SECRET = process.env.JWT_SECRET || 'abhyaas_erp_secret_2024';
-const MONGO_URI  = process.env.MONGO_URI  || 'mongodb://localhost:27017/abhyaas_erp';
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/abhyaas_erp';
 
 // ── Middleware ────────────────────────────────────────────────────
-app.use(cors({ origin: ['http://localhost:3000','http://localhost:5173'], credentials: true }));
+app.use(cors({ origin: ['http://localhost:3000', 'http://localhost:5173'], credentials: true }));
 app.use(express.json({ limit: '10mb' }));
 
 // Request logger
@@ -62,35 +62,45 @@ mongoose.connect(MONGO_URI)
 // ════════════════════════════════════════════════════════════════
 // AUTH ROUTES
 // ════════════════════════════════════════════════════════════════
+const { getTenantModel } = require('./utils/tenant.js');
+
 app.post('/api/auth/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
-    if (!email || !password)
-      return res.status(400).json({ success:false, message:'Email and password required' });
+    const { loginId, password } = req.body;
+    if (!loginId || !password)
+      return res.status(400).json({ success: false, message: 'Login ID and password required' });
 
-    const user = await User.findOne({ email: email.toLowerCase(), isActive: true });
-    if (!user)
-      return res.status(401).json({ success:false, message:'Invalid credentials' });
+    const { CentralAuth } = require('./models');
+    const authRecord = await CentralAuth.findOne({ loginId });
+    if (!authRecord)
+      return res.status(401).json({ success: false, message: 'Invalid credentials' });
 
-    const match = await bcrypt.compare(password, user.password);
+    const match = await bcrypt.compare(password, authRecord.password);
     if (!match)
-      return res.status(401).json({ success:false, message:'Invalid credentials' });
+      return res.status(401).json({ success: false, message: 'Invalid credentials' });
+
+    // Dynamic model for tenant profile
+    const TenantUser = getTenantModel(authRecord.tenantId, 'User', User.schema);
+    const user = await TenantUser.findById(authRecord.userRef);
+
+    if (!user)
+      return res.status(404).json({ success: false, message: 'User profile not found' });
 
     const token = jwt.sign(
-      { _id:user._id, role:user.role, name:user.name, email:user.email },
-      JWT_SECRET, { expiresIn:'7d' }
+      { _id: user._id, tenantId: authRecord.tenantId, role: authRecord.role, name: user.name, email: user.email },
+      JWT_SECRET, { expiresIn: '7d' }
     );
 
-    await ActivityLog.create({ user:user._id, action:'Login', module:'Auth', details:`${user.role} logged in` });
+    await ActivityLog.create({ user: user._id, action: 'Login', module: 'Auth', details: `${authRecord.role} logged in` });
 
     res.json({
       success: true,
       message: 'Login successful',
       token,
-      user: { _id:user._id, name:user.name, email:user.email, role:user.role, profilePhotoUrl:user.profilePhotoUrl },
+      user: { _id: user._id, name: user.name, email: user.email, role: authRecord.role, tenantId: authRecord.tenantId, profilePhotoUrl: user.profilePhotoUrl },
     });
-  } catch(e) {
-    res.status(500).json({ success:false, message:e.message });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
   }
 });
 
@@ -98,13 +108,13 @@ app.post('/api/auth/register', async (req, res) => {
   try {
     const existing = await User.findOne({ email: req.body.email?.toLowerCase() });
     if (existing)
-      return res.status(400).json({ success:false, message:'Email already registered' });
+      return res.status(400).json({ success: false, message: 'Email already registered' });
 
     const hashed = await bcrypt.hash(req.body.password, 10);
-    const pending = await PendingRegistration.create({ ...req.body, password: hashed, status:'Pending' });
-    res.json({ success:true, message:'Registration submitted. Awaiting admin approval.', data: pending });
-  } catch(e) {
-    res.status(500).json({ success:false, message:e.message });
+    const pending = await PendingRegistration.create({ ...req.body, password: hashed, status: 'Pending' });
+    res.json({ success: true, message: 'Registration submitted. Awaiting admin approval.', data: pending });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
   }
 });
 
@@ -112,15 +122,15 @@ app.post('/api/auth/register', async (req, res) => {
 app.use('/api', require('./routes'));
 
 // ── Health check ──────────────────────────────────────────────────
-app.get('/health', (_, res) => res.json({ status:'ok', time: new Date().toISOString() }));
+app.get('/health', (_, res) => res.json({ status: 'ok', time: new Date().toISOString() }));
 
 // ── 404 handler ───────────────────────────────────────────────────
-app.use((req, res) => res.status(404).json({ success:false, message:`Route ${req.path} not found` }));
+app.use((req, res) => res.status(404).json({ success: false, message: `Route ${req.path} not found` }));
 
 // ── Error handler ─────────────────────────────────────────────────
 app.use((err, req, res, next) => {
   console.error(err);
-  res.status(500).json({ success:false, message:err.message });
+  res.status(500).json({ success: false, message: err.message });
 });
 
 app.listen(PORT, () => console.log(`✓ Server running on http://localhost:${PORT}`));

@@ -1,6 +1,6 @@
-import User from '../models/User.js';
-import PendingRegistration from '../models/PendingRegistration.js';
-import School from '../models/School.js';
+import models from '../models/index.js';
+const { CentralAuth, User } = models;
+import { getTenantModel } from '../utils/tenant.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 

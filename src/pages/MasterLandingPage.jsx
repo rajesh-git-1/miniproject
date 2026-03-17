@@ -698,7 +698,7 @@ export default function MasterLandingPage() {
   const [schools,        setSchools]        = useState(FALLBACK_SCHOOLS);
   const [selectedSchool, setSelectedSchool] = useState(null);
   const [activeModal,    setActiveModal]    = useState(null);
-  const [loginEmail,     setLoginEmail]     = useState('');
+  const [loginId,        setLoginId]        = useState('');
   const [loginPassword,  setLoginPassword]  = useState('');
   const [loginError,     setLoginError]     = useState('');
   const [loginLoading,   setLoginLoading]   = useState(false);
@@ -757,15 +757,20 @@ export default function MasterLandingPage() {
       const res  = await fetch('http://localhost:5000/api/auth/login', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ email: loginEmail, password: loginPassword, school_id: selectedSchool?._id }),
+        body:    JSON.stringify({ loginId: loginId, password: loginPassword }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Login failed');
+      
+      // Store credentials
       dispatch(setCredentials({ user: data.user, token: data.token }));
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
-      sessionStorage.removeItem('selectedSchoolId'); 
-      navigate(`/dashboard/${data.user.role.toLowerCase()}`);
+      
+      // Redirect based on role
+      const role = data.user.role.toLowerCase();
+      navigate(`/dashboard/${role}`);
+      
     } catch (err) {
       setLoginError(err.message);
     } finally {
@@ -845,7 +850,7 @@ export default function MasterLandingPage() {
                   </span>
                 </h1>
                 <p style={{ fontSize: '1.05rem', color: '#8b949e', maxWidth: 450, margin: '0 auto', lineHeight: 1.65 }}>
-                  A modern school management platform. Select your school below to continue.
+                  A modern school management platform. Sign in to your institution to continue.
                 </p>
               </div>
             )}
@@ -856,26 +861,7 @@ export default function MasterLandingPage() {
               </div>
             )}
 
-            {/* School selector */}
-            <div style={{ background: '#161b22', borderRadius: 20, boxShadow: '0 10px 40px rgba(0,0,0,0.4)', border: '1px solid #30363d', padding: '2.2rem', maxWidth: 460, margin: '0 auto' }}>
-              <label style={lbl}>Select Your School</label>
-              <select className="school-select" onChange={handleSchoolChange} value={selectedSchool?._id || ''}>
-                <option value="" disabled>Choose your institution…</option>
-                {schools.map(s => <option key={s._id} value={s._id}>{s.name}</option>)}
-              </select>
-
-              {selectedSchool && (
-                <div style={{ marginTop: '1.2rem', padding: '13px 15px', background: 'rgba(94, 209, 215, 0.05)', borderRadius: 13, border: '1px solid rgba(94, 209, 215, 0.2)', display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{ width: 42, height: 42, borderRadius: 10, background: 'linear-gradient(135deg, rgb(94, 209, 215) 0%, rgb(59, 184, 192) 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0d1117', fontWeight: 900, fontSize: '1rem', flexShrink: 0 }}>
-                    {selectedSchool.name?.[0]}
-                  </div>
-                  <div style={{ textAlign: 'left' }}>
-                    <div style={{ fontWeight: 700, color: '#e6edf3', fontSize: '0.93rem' }}>{selectedSchool.name}</div>
-                    <div style={{ fontSize: '0.76rem', color: '#8b949e', marginTop: 2 }}>Use the navbar above to navigate</div>
-                  </div>
-                </div>
-              )}
-            </div>
+            {/* Removed School Selector for Multi-Tenant Login ID Architecture */}
 
           </div>
         </div>
@@ -983,12 +969,7 @@ export default function MasterLandingPage() {
       {/* LOGIN */}
       {activeModal === 'login' && (
         <Modal title="Sign In" subtitle={selectedSchool ? selectedSchool.name : "EduManager"} onClose={closeModal}>
-          {!selectedSchool ? (
-            <div style={{ textAlign: 'center', color: '#8b949e', padding: '1rem 0' }}>
-              Please select a school from the main page first.
-            </div>
-          ) : (
-            <>
+          <>
               {loginError && (
                 <div style={{ background: 'rgba(248,81,73,0.1)', border: '1px solid rgba(248,81,73,0.3)', color: '#f85149', padding: '10px 14px', borderRadius: 10, fontSize: '0.87rem', marginBottom: '1rem' }}>
                   {loginError}
@@ -997,16 +978,16 @@ export default function MasterLandingPage() {
               <form onSubmit={handleLogin}>
                 <div style={{ marginBottom: '1.1rem' }}>
                   <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 700, color: '#8b949e', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
-                    Email Address
+                    Login ID
                   </label>
                   <input
-                    type="email"
-                    placeholder="you@school.edu"
+                    type="text"
+                    placeholder="e.g. AB-STD-101"
                     required
                     className="form-input"
-                    value={loginEmail}
-                    onChange={e => setLoginEmail(e.target.value)}
-                    autoComplete="email"
+                    value={loginId}
+                    onChange={e => setLoginId(e.target.value)}
+                    autoComplete="username"
                   />
                 </div>
                 <div style={{ marginBottom: '1.1rem' }}>
@@ -1037,7 +1018,6 @@ export default function MasterLandingPage() {
                 </button>
               </p>
             </>
-          )}
         </Modal>
       )}
     </>

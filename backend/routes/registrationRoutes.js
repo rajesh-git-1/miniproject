@@ -9,7 +9,7 @@
 // // //         const { status } = req.query;
 // // //         // If status is provided, filter by it. Otherwise, return all.
 // // //         const query = status ? { status } : {};
-        
+
 // // //         const registrations = await Registration.find(query).sort({ createdAt: -1 });
 // // //         res.json({ success: true, registrations });
 // // //     } catch (error) {
@@ -23,9 +23,9 @@
 // //         const { status } = req.query;
 // //         // If status is provided and not empty, filter by it.
 // //         const query = status ? { status } : {};
-        
+
 // //         const registrations = await Registration.find(query).sort({ createdAt: -1 });
-        
+
 // //         // FIX: Send it as 'data' so the frontend finds it easily
 // //         res.json({ success: true, data: registrations });
 // //     } catch (error) {
@@ -37,7 +37,7 @@
 // //     try {
 // //         const { id, action } = req.params;
 // //         let newStatus = 'Pending';
-        
+
 // //         if (action === 'approve') newStatus = 'Approved';
 // //         if (action === 'reject') newStatus = 'Rejected';
 
@@ -46,7 +46,7 @@
 // //             { status: newStatus }, 
 // //             { new: true }
 // //         );
-        
+
 // //         res.json({ success: true, data: updatedRegistration, message: `Registration ${newStatus}` });
 // //     } catch (error) {
 // //         res.status(500).json({ success: false, message: error.message });
@@ -114,7 +114,7 @@
 // router.post('/', upload.single('profilePhoto'), async (req, res) => {
 //     try {
 //         const regData = { ...req.body };
-        
+
 //         // If a file was uploaded, generate the permanent URL
 //         if (req.file) {
 //             regData.profilePhotoUrl = `http://localhost:5000/uploads/${req.file.filename}`;
@@ -137,7 +137,7 @@
 //         const updatedRegistration = await Registration.findByIdAndUpdate(
 //             id, { status: newStatus }, { new: true }
 //         );
-        
+
 //         res.json({ success: true, data: updatedRegistration });
 //     } catch (error) {
 //         res.status(500).json({ success: false, message: error.message });
@@ -181,7 +181,21 @@ router.get('/', async (req, res) => {
 router.post('/', upload.single('profilePhoto'), async (req, res) => {
     try {
         const regData = { ...req.body };
+
+        // --- STRICT VALIDATIONS ---
+        const { role, name, email, password } = regData;
+
+        if (!role || !name || !email || !password) {
+            return res.status(400).json({ success: false, message: 'Role, name, email and password are required' });
+        }
+
+        const phoneToValidate = regData.mobile || regData.officeContact;
+        if (phoneToValidate && !/^\d{10}$/.test(phoneToValidate)) {
+            return res.status(400).json({ success: false, message: 'Phone number must be exactly 10 digits' });
+        }
+
         if (req.file) regData.profilePhotoUrl = `http://localhost:5000/uploads/${req.file.filename}`;
+
         const newReg = new Registration(regData);
         await newReg.save();
         res.json({ success: true, data: newReg });
@@ -206,7 +220,7 @@ router.put('/:id/:action', async (req, res) => {
                 const newStudent = new Student({
                     name: reg.name,
                     email: reg.email,
-                    rollNo: reg.rollNo || `STU-${Math.floor(Math.random()*10000)}`,
+                    rollNo: reg.rollNo || `STU-${Math.floor(Math.random() * 10000)}`,
                     standard: reg.className || reg.standard,
                     section: reg.section,
                     phone: reg.mobile || reg.phone,
@@ -222,7 +236,7 @@ router.put('/:id/:action', async (req, res) => {
                 const newTeacher = new Teacher({
                     name: reg.name,
                     email: reg.email,
-                    teacherId: reg.teacherId || `TCH-${Math.floor(Math.random()*10000)}`,
+                    teacherId: reg.teacherId || `TCH-${Math.floor(Math.random() * 10000)}`,
                     phone: reg.mobile || reg.phone,
                     department: reg.department,
                     qualification: reg.qualification,
@@ -238,7 +252,7 @@ router.put('/:id/:action', async (req, res) => {
         // 3. Update the status of the registration to "Approved"
         reg.status = newStatus;
         await reg.save();
-        
+
         res.json({ success: true, data: reg });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
