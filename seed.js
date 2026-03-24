@@ -9,7 +9,10 @@ dotenv.config();
 const seedData = async () => {
     try {
         // Updated connection string to point to your Cloud Database!
-        await mongoose.connect('mongodb+srv://chandini:MyPasword123@edumanagercluster.weofmss.mongodb.net/school_management_db?appName=EduManagerCluster');
+        await mongoose.connect('mongodb+srv://chandini:TestDb321@edumanagercluster.weofmss.mongodb.net/school_management_db?appName=EduManagerCluster', {
+            serverSelectionTimeoutMS: 5000,
+            socketTimeoutMS: 45000,
+        });
         console.log("Connected to MongoDB Cloud...");
 
         await School.deleteMany({});

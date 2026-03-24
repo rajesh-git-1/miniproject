@@ -590,7 +590,7 @@ export function ClassesCreatePage() {
   const token = useToken();
   const { data: classes, reload: reloadClasses } = useFetch('/classes');
   const { data: teacherData } = useFetch('/teachers?limit=100');
-  const teacherList = teacherData?.teachers || [];
+  const teacherList = Array.isArray(teacherData) ? teacherData : (teacherData?.teachers || teacherData?.data || []);
 
   const [form, setForm] = useState({ standard: '', section: 'A', room: '', capacity: 40, classTeacher: '', subjects: [] });
   const [savingClass, setSavingClass] = useState(false);
@@ -602,6 +602,9 @@ export function ClassesCreatePage() {
     if (!form.standard || !form.section) return show('Standard and Section required', false);
     setSavingClass(true);
     const payload = { ...form, name: `Class ${form.standard}${form.section}` };
+    if (!payload.classTeacher) {
+      delete payload.classTeacher;
+    }
     const r = await call(token, 'POST', '/classes', payload);
     setSavingClass(false);
     if (r.success) {

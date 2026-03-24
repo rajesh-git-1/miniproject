@@ -33,9 +33,9 @@ const StudentSchema = new Schema({
   dob: { type: Date },
   gender: { type: String, enum: ['Male', 'Female', 'Other'] },
   address: { type: String },
-  classId: { type: Schema.Types.ObjectId, ref: 'Class' },
   standard: { type: String },   // "10", "9" etc.
-  section: { type: String },   // "A","B"
+  section: { type: String },    // "A","B"
+  classId: { type: Schema.Types.ObjectId, ref: 'Class' },
   parentName: { type: String },
   parentPhone: { type: String },
   parentEmail: { type: String },
@@ -286,6 +286,8 @@ const PendingRegistrationSchema = new Schema({
   role: String,
   rollNo: String,
   standard: String,
+  section: String,
+  classId: String,
   teacherId: String,
   designation: String,
   adminId: String,

@@ -245,13 +245,14 @@ router.put('/admin/registrations/:id/:action', adminOnly, async (req, res) => {
       // 2. Move data to Students or Teachers collection permanently
       if (reg.role === 'Student') {
         const generatedRollNo = await generateSequentialId(Student, 'S', 'rollNo');
-        await Student.create({
+        const studentProfile = await Student.create({
           name: userData.name,
           email: userData.email,
           user: authUser._id,
           rollNo: reg.rollNo || reg.studentId || generatedRollNo,
           standard: reg.className || reg.standard,
           section: reg.section || 'A',
+          classId: (reg.classId && mongoose.Types.ObjectId.isValid(reg.classId)) ? reg.classId : null,
           gender: reg.gender,
           fatherName: reg.fatherName,
           motherName: reg.motherName,
@@ -261,6 +262,19 @@ router.put('/admin/registrations/:id/:action', adminOnly, async (req, res) => {
           profilePhotoUrl: reg.profilePhotoUrl,
           isActive: true
         });
+
+        // 🟢 SYNC WITH CLASS
+        const finalClassId = reg.classId || null;
+        if (finalClassId && mongoose.Types.ObjectId.isValid(finalClassId)) {
+          await Class.findByIdAndUpdate(finalClassId, { $addToSet: { students: studentProfile._id } });
+        } else if (reg.standard) {
+          // Fallback: try to find class by standard and section
+          const targetClass = await Class.findOne({ standard: reg.standard, section: reg.section || 'A' });
+          if (targetClass) {
+            await Student.findByIdAndUpdate(studentProfile._id, { classId: targetClass._id });
+            await Class.findByIdAndUpdate(targetClass._id, { $addToSet: { students: studentProfile._id } });
+          }
+        }
       } else if (reg.role === 'Teacher') {
         const generatedTeacherId = await generateSequentialId(Teacher, 'T', 'teacherId');
         await Teacher.create({

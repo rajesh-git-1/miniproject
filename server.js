@@ -42,7 +42,7 @@ const { User, PendingRegistration, ActivityLog } = require('./models');
 const app = express();
 const PORT = process.env.PORT || 5000;
 const JWT_SECRET = process.env.JWT_SECRET || 'abhyaas_erp_secret_2024';
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/abhyaas_erp';
+const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://chandini:TestDb321@edumanagercluster.weofmss.mongodb.net/school_management_db?appName=EduManagerCluster';
 
 // ── Middleware ────────────────────────────────────────────────────
 app.use(cors({ origin: ['http://localhost:3000', 'http://localhost:5173'], credentials: true }));
@@ -55,9 +55,18 @@ app.use((req, _, next) => {
 });
 
 // ── Connect DB ────────────────────────────────────────────────────
-mongoose.connect(MONGO_URI)
-  .then(() => console.log('✓ MongoDB connected'))
+mongoose.set('strictQuery', false);
+
+mongoose.connect(MONGO_URI, {
+  serverSelectionTimeoutMS: 5000,
+  socketTimeoutMS: 45000,
+})
+  .then(() => console.log('✓ MongoDB Cluster connected Efficiently'))
   .catch(err => { console.error('✗ MongoDB error:', err); process.exit(1); });
+
+mongoose.connection.on('error', err => {
+  console.error('MongoDB runtime error:', err);
+});
 
 // ════════════════════════════════════════════════════════════════
 // AUTH ROUTES

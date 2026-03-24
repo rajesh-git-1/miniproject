@@ -18,7 +18,7 @@
 
 // dotenv.config();
 
-// const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/abhyaas_erp';
+// const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://chandini:TestDb321@edumanagercluster.weofmss.mongodb.net/school_management_db?appName=EduManagerCluster';
 
 // // ── helpers ──────────────────────────────────────────────────────
 // const hash = (p) => bcrypt.hashSync(p, 10);
@@ -434,10 +434,12 @@ import {
   Announcement, TransportRoute, TransportAssignment,
   Leave, Payroll, ActivityLog, TalentTest,
 } from '../models/index.js';
+import FeeStructure from '../models/FeeStructure.js';
+import FeePayment from '../models/FeePayment.js';
 
 dotenv.config();
 
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/abhyaas_erp';
+const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://chandini:TestDb321@edumanagercluster.weofmss.mongodb.net/school_management_db?appName=EduManagerCluster';
 
 // ── helpers ──────────────────────────────────────────────────────
 const hash = (p) => bcrypt.hashSync(p, 10);
@@ -646,9 +648,30 @@ async function seed() {
   await Timetable.insertMany(ttDocs);
   console.log(`✓ Timetable created for ${classDocs.slice(0, 5).length} classes`);
 
-  // ── 10. Fees ─────────────────────────────────────────────────
+  // ── 10. Fees (FeeStructure and FeePayment) ───────────────────
+  // First, generate generic FeeStructures for the standards
+  const uniqueStandards = [...new Set(classDocs.map(c => c.standard))];
+  const feeStructures = [];
+  
+  for (const std of uniqueStandards) {
+    for (const feeType of FEE_TYPES) {
+      const amount = feeType === 'Tuition' ? rndInt(8000, 15000) : rndInt(500, 3000);
+      feeStructures.push({
+        standard: std, feeType, amount,
+        dueDate: daysAhead(rndInt(-30, 30)),
+        academicYear: "2025-2026"
+      });
+    }
+  }
+  const savedStructures = await FeeStructure.insertMany(feeStructures);
+  console.log(`✓ ${savedStructures.length} fee structures created`);
+
+  // Next, create mock payments for students
   const feeDocs = [];
+  const feePaymentDocs = [];
+  
   for (const s of studentDocs) {
+    // Legacy Fee Docs
     for (const feeType of FEE_TYPES) {
       const amount = feeType === 'Tuition' ? rndInt(8000, 15000) : rndInt(500, 3000);
       const isPaid = rnd([true, true, true, false, false]);
@@ -663,9 +686,29 @@ async function seed() {
         collectedBy: adminUser._id,
       });
     }
+
+    // New FeePayment Docs linked to FeeStructures
+    const studentStructures = savedStructures.filter(st => st.standard === s.standard);
+    for (const st of studentStructures) {
+      const isPaid = rnd([true, true, true, false, false]); // 60% chance of payment
+      if (isPaid) {
+        feePaymentDocs.push({
+          studentId: s._id,
+          feeStructureId: st._id,
+          amountPaid: st.amount,
+          discount: 0,
+          fine: 0,
+          paymentMethod: rnd(['Cash', 'Online', 'Cheque']),
+          remarks: 'System Generated'
+        });
+      }
+    }
   }
   await Fee.insertMany(feeDocs);
-  console.log(`✓ ${feeDocs.length} fee records created`);
+  await FeePayment.insertMany(feePaymentDocs);
+  console.log(`✓ ${feeDocs.length} legacy fee records created`);
+  console.log(`✓ ${feePaymentDocs.length} new fee payment records created`);
+
 
   // ── 11. Homework ──────────────────────────────────────────────
   const hwDocs = [];

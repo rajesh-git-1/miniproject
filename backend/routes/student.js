@@ -75,4 +75,15 @@ router.get('/dashboard/activity', async (req, res) => {
   }
 });
 
+// GET /api/student/my-fees - Full payment history
+router.get('/my-fees', async (req, res) => {
+  try {
+    const studentId = req.user._id;
+    const history = await Fee.find({ student: studentId }).sort({ dueDate: -1 });
+    res.json({ success: true, data: history });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 export default router;

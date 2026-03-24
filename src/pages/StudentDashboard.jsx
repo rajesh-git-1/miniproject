@@ -1453,40 +1453,93 @@ function FeeModule() {
     });
   }, []);
 
+  const totalPending = fees
+    .filter(f => f.status !== 'Paid')
+    .reduce((sum, f) => sum + (f.amount - (f.paidAmount || 0)), 0);
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+      {/* 💳 OVERVIEW CARD */}
+      <div style={{ background: STUDENT_CONFIG.gradient, borderRadius: 16, padding: "32px", color: "#fff", boxShadow: "0 10px 25px rgba(37, 99, 235, 0.2)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 700, opacity: 0.9, textTransform: "uppercase", letterSpacing: "0.05em" }}>Total Outstandings</div>
+          <div style={{ fontSize: 36, fontWeight: 800, marginTop: 8 }}>₹{totalPending.toLocaleString()}</div>
+        </div>
+        <div style={{ background: "rgba(255,255,255,0.2)", width: 60, height: 60, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28 }}>
+          💰
+        </div>
+      </div>
+
       <div style={{ background: theme.colors.surface, border: `1px solid ${theme.colors.border}`, borderRadius: 12, padding: 24, boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
-        <h2 style={{ fontSize: 20, fontWeight: 700, color: theme.colors.text, marginBottom: 16 }}>My Fee Ledger</h2>
-        {loading ? <p style={{color: theme.colors.textMuted}}>Loading your fees...</p> : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {fees.length === 0 ? <div style={{ color: theme.colors.textMuted, fontSize: 14 }}>No fee records found.</div> :
+        <h2 style={{ fontSize: 20, fontWeight: 700, color: theme.colors.text, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span>📜</span> Payment History & Ledger
+        </h2>
+        
+        {loading ? (
+          <div style={{ textAlign: "center", padding: "40px 0" }}>
+            <div style={{ color: theme.colors.textMuted }}>Loading ledger...</div>
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            {fees.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "40px 20px", background: theme.colors.bg, borderRadius: 12, border: `1px dashed ${theme.colors.border}` }}>
+                <div style={{ fontSize: 40, marginBottom: 16 }}>🕊️</div>
+                <div style={{ fontWeight: 700, color: theme.colors.text }}>No records found</div>
+                <div style={{ fontSize: 13, color: theme.colors.textMuted, marginTop: 4 }}>You don't have any current fee structures or history.</div>
+              </div>
+            ) : (
               fees.map((f, i) => {
                 const amount = Number(f.amount) || 0;
                 const paid = Number(f.paidAmount) || 0;
                 const balance = amount - paid;
+                const isPaid = f.status === 'Paid';
+                const isOverdue = f.status === 'Overdue';
                 
                 return (
-                  <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px", background: theme.colors.bg, borderRadius: 8, border: `1px solid ${theme.colors.border}` }}>
-                    <div>
-                      <div style={{ fontSize: 16, fontWeight: 700, color: theme.colors.text }}>{f.feeType || 'School Fee'}</div>
-                      <div style={{ fontSize: 13, color: theme.colors.textMuted, marginTop: 4 }}>Due: {f.dueDate ? new Date(f.dueDate).toLocaleDateString('en-IN') : 'N/A'}</div>
-                    </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontSize: 16, fontWeight: 800, color: theme.colors.text }}>Total: ₹{amount.toLocaleString()}</div>
-                      {paid > 0 && <div style={{ fontSize: 13, color: theme.colors.success, marginTop: 2, fontWeight: 600 }}>Paid: ₹{paid.toLocaleString()}</div>}
-                      {balance > 0 && <div style={{ fontSize: 13, color: theme.colors.danger, marginTop: 2, fontWeight: 600 }}>Balance: ₹{balance.toLocaleString()}</div>}
-                      <div style={{
-                        marginTop: 8, display: 'inline-block', padding: "4px 12px", borderRadius: 20, fontSize: 11, fontWeight: 700,
-                        background: f.status === 'Paid' ? theme.colors.success + '15' : theme.colors.warning + '15',
-                        color: f.status === 'Paid' ? theme.colors.success : theme.colors.warning
-                      }}>
-                        {f.status}
+                  <div key={i} style={{ 
+                    padding: "20px", 
+                    background: isPaid ? theme.colors.success + '05' : theme.colors.bg, 
+                    borderRadius: 12, 
+                    border: `1px solid ${isPaid ? theme.colors.success + '30' : theme.colors.border}`,
+                    display: "flex", 
+                    justifyContent: "space-between", 
+                    alignItems: "center",
+                    transition: "transform 0.2s",
+                  }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                        <span style={{ fontSize: 16, fontWeight: 700, color: theme.colors.text }}>{f.feeType || 'General Fee'}</span>
+                        <div style={{
+                          padding: "2px 10px", borderRadius: 20, fontSize: 10, fontWeight: 700,
+                          background: isPaid ? theme.colors.success + '15' : isOverdue ? theme.colors.danger + '15' : theme.colors.warning + '15',
+                          color: isPaid ? theme.colors.success : isOverdue ? theme.colors.danger : theme.colors.warning,
+                          textTransform: "uppercase"
+                        }}>{f.status}</div>
                       </div>
+                      <div style={{ fontSize: 13, color: theme.colors.textMuted, display: 'flex', gap: 16 }}>
+                        <span>📅 Due: <b>{f.dueDate ? new Date(f.dueDate).toLocaleDateString('en-IN') : 'N/A'}</b></span>
+                        {f.paidDate && <span style={{ color: theme.colors.success }}>✅ Paid: <b>{new Date(f.paidDate).toLocaleDateString('en-IN')}</b></span>}
+                      </div>
+                    </div>
+
+                    <div style={{ textAlign: 'right', minWidth: 140 }}>
+                      <div style={{ fontSize: 18, fontWeight: 800, color: theme.colors.text }}>₹{amount.toLocaleString()}</div>
+                      {balance > 0 && paid > 0 && <div style={{ fontSize: 12, color: theme.colors.textMuted, marginTop: 4 }}>Paid: ₹{paid.toLocaleString()}</div>}
+                      {balance > 0 && (
+                        <div style={{ fontSize: 13, color: theme.colors.danger, marginTop: 6, fontWeight: 700 }}>
+                          Due: ₹{balance.toLocaleString()}
+                        </div>
+                      )}
+                      {isPaid && (
+                        <div style={{ fontSize: 12, color: theme.colors.success, marginTop: 4, fontWeight: 600 }}>
+                          Payment Method: {f.method || 'Cash'}
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
               })
-            }
+            )}
           </div>
         )}
       </div>
@@ -1686,7 +1739,7 @@ function DashboardContent({ activeModule, userName, stats, activities, profile }
       <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
         <div style={{ background: theme.colors.surface, border: `1px solid ${theme.colors.border}`, borderRadius: 12, padding: 24, boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
           <h2 style={{ fontSize: 20, fontWeight: 700, color: theme.colors.text, marginBottom: 16 }}>Attendance Dashboard</h2>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 24 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 24 }}>
             <div style={{ padding: 16, background: theme.colors.bg, borderRadius: 8, border: `1px solid ${theme.colors.border}`, textAlign: "center" }}>
               <div style={{ fontSize: 12, color: theme.colors.textMuted, textTransform: "uppercase", fontWeight: 700 }}>Total Days</div>
               <div style={{ fontSize: 28, color: theme.colors.text, fontWeight: 700, marginTop: 4 }}>{stats?.totalDays || 0}</div>
@@ -1698,6 +1751,10 @@ function DashboardContent({ activeModule, userName, stats, activities, profile }
             <div style={{ padding: 16, background: theme.colors.bg, borderRadius: 8, border: `1px solid ${theme.colors.border}`, textAlign: "center" }}>
               <div style={{ fontSize: 12, color: theme.colors.textMuted, textTransform: "uppercase", fontWeight: 700 }}>Absent</div>
               <div style={{ fontSize: 28, color: theme.colors.danger, fontWeight: 700, marginTop: 4 }}>{(stats?.totalDays || 0) - (stats?.presentDays || 0)}</div>
+            </div>
+            <div style={{ padding: 16, background: theme.colors.studentColor + '10', borderRadius: 8, border: `1px solid ${theme.colors.studentColor}30`, textAlign: "center" }}>
+              <div style={{ fontSize: 12, color: theme.colors.studentColor, textTransform: "uppercase", fontWeight: 700 }}>Percentage</div>
+              <div style={{ fontSize: 28, color: theme.colors.studentColor, fontWeight: 800, marginTop: 4 }}>{stats?.attendancePct || 0}%</div>
             </div>
           </div>
 
