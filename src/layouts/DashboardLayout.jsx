@@ -61,7 +61,7 @@ const ROLE_META = {
 
             { name: 'Attendance', path: '/dashboard/admin/attendance', icon: '◷' },
             // { name: 'Examinations', path: '/dashboard/admin/exams', icon: '◈' },
-            { name: 'Timetable', path: '/dashboard/admin/timetable', icon: '▦' },
+            // { name: 'Timetable', path: '/dashboard/admin/timetable', icon: '▦' },
             { name: 'Fee Management', path: '/dashboard/admin/fees', icon: '◆' },
             { name: 'Subjects', path: '/dashboard/admin/subjects', icon: '📖' },
             { name: 'Enter Marks', path: '/dashboard/admin/marks', icon: '📝' },

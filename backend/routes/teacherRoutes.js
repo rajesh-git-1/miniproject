@@ -1,20 +1,3 @@
-// import express from 'express';
-// import Teacher from '../models/Teacher.js';
-// const router = express.Router();
-
-// router.get('/', async (req, res) => {
-//     try {
-//         const teachers = await Teacher.find().sort({ createdAt: -1 });
-//         res.json({ success: true, teachers });
-//     } catch (e) { res.status(500).json({ success: false, message: e.message }); }
-// });
-
-// router.put('/:id', async (req, res) => {
-//     try {
-//         const teacher = await Teacher.findByIdAndUpdate(req.params.id, req.body, { new: true });
-//         res.json({ success: true, data: teacher });
-//     } catch (e) { res.status(500).json({ success: false, message: e.message }); }
-// });
 
 // export default router;
 import express from 'express';

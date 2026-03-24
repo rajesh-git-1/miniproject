@@ -290,6 +290,7 @@ import reportRoutes from './routes/reportRoutes.js';
 import apiRoutes from './routes/index.js';
 import inventoryRoutes from './routes/inventoryRoutes.js'; 
 import registrationRoutes from './routes/registrationRoutes.js';
+import studentDashboardRoutes from './routes/student.js';
 
 // IMPORTANT: Ensure Attendance is imported here!
 import { PendingRegistration, User, Student, Teacher, Class, CentralAuth, Attendance } from './models/index.js';
@@ -542,11 +543,11 @@ app.get('/api/attendance/student-stats/:studentId', async (req, res) => {
   try {
     const { studentId } = req.params;
 
-    // Find all attendance records for this specific student
-    const records = await Attendance.find({ student: studentId });
+    // Find all attendance records for this specific student, sorted by date DESC
+    const records = await Attendance.find({ student: studentId }).sort({ date: -1 });
 
     if (records.length === 0) {
-      return res.json({ success: true, data: { percentage: 0, total: 0, present: 0 } });
+      return res.json({ success: true, data: { percentage: 0, totalDays: 0, presentDays: 0, attendanceHistory: [] } });
     }
 
     let presentCount = 0;
@@ -559,7 +560,8 @@ app.get('/api/attendance/student-stats/:studentId', async (req, res) => {
       data: {
         percentage,
         totalDays: records.length,
-        presentDays: presentCount
+        presentDays: presentCount,
+        attendanceHistory: records
       }
     });
 
@@ -578,6 +580,7 @@ app.use('/api/fees', feeRoutes);
 app.use('/api/inventory', inventoryRoutes); 
 app.use('/api/principal', principalRoutes);
 app.use('/api/registrations', registrationRoutes);
+app.use('/api/student', studentDashboardRoutes);
 app.use('/api', apiRoutes); 
 
 app.use((req, res) => {

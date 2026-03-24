@@ -1,5 +1,4 @@
 # ── Dependencies ──────────────────────────────────────
-node_modules/
 /.pnp
 .pnp.js
 
@@ -38,3 +37,4 @@ Thumbs.db
 TEMP_DONE.txt
 *.tmp
 coverage/
+node_modules

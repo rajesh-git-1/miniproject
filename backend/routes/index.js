@@ -10,7 +10,7 @@ import {
   Fee, Homework, LibraryBook, LibraryIssue,
   Announcement, TransportRoute, TransportAssignment,
   Leave, Payroll, ActivityLog, TalentTest,
-  PendingRegistration,
+  PendingRegistration,CentralAuth
 } from '../models/index.js';
 import { sendAbsentNotification } from '../utils/whatsapp.js';
 
@@ -397,7 +397,17 @@ router.post('/students', adminOnly, async (req, res) => {
 
 router.put('/students/:id', adminOnly, async (req, res) => {
   try {
+    const oldS = await Student.findById(req.params.id);
     const s = await Student.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+    
+    // Legacy Sync: Keep the old abhyaas_users email identical so the Login ID dragnet doesn't break!
+    if (oldS && oldS.email && s.email && oldS.email.toLowerCase() !== s.email.toLowerCase()) {
+      const db = mongoose.connection.db;
+      await db.collection('abhyaas_users').updateOne(
+        { email: oldS.email.toLowerCase() },
+        { $set: { email: s.email.toLowerCase() } }
+      );
+    }
     ok(res, s, 'Student updated');
   } catch (e) { err(res, e.message); }
 });
@@ -484,7 +494,17 @@ router.post('/teachers', adminOnly, async (req, res) => {
 
 router.put('/teachers/:id', adminOnly, async (req, res) => {
   try {
+    const oldT = await Teacher.findById(req.params.id);
     const t = await Teacher.findByIdAndUpdate(req.params.id, req.body, { new: true });
+
+    // Legacy Sync: Keep the old abhyaas_users email identical so the Login ID dragnet doesn't break!
+    if (oldT && oldT.email && t.email && oldT.email.toLowerCase() !== t.email.toLowerCase()) {
+      const db = mongoose.connection.db;
+      await db.collection('abhyaas_users').updateOne(
+        { email: oldT.email.toLowerCase() },
+        { $set: { email: t.email.toLowerCase() } }
+      );
+    }
     ok(res, t, 'Teacher updated');
   } catch (e) { err(res, e.message); }
 });
@@ -492,12 +512,47 @@ router.put('/teachers/:id', adminOnly, async (req, res) => {
 // ════════════════════════════════════════════════════════════════
 // CLASSES
 // ════════════════════════════════════════════════════════════════
+// router.get('/classes', auth, async (req, res) => {
+//   try {
+//     const classes = await Class.find()
+//       .populate('classTeacher', 'name')
+//       .populate('students', 'name rollNo')
+//       .sort({ standard: 1, section: 1 });
+//     ok(res, classes);
+//   } catch (e) { err(res, e.message); }
+// });
+
+// router.get('/classes/:id', auth, async (req, res) => {
+//   try {
+//     const c = await Class.findById(req.params.id)
+//       .populate('classTeacher', 'name email')
+//       .populate('students', 'name rollNo feeStatus');
+//     ok(res, c);
+//   } catch (e) { err(res, e.message); }
+// });
+// ════════════════════════════════════════════════════════════════
+// CLASSES
+// ════════════════════════════════════════════════════════════════
 router.get('/classes', auth, async (req, res) => {
   try {
     const classes = await Class.find()
       .populate('classTeacher', 'name')
-      .populate('students', 'name rollNo')
-      .sort({ standard: 1, section: 1 });
+      .sort({ standard: 1, section: 1 })
+      .lean(); // .lean() lets us safely modify the object
+
+    // 🟢 BULLETPROOF SYNC: Dynamically fetch students so the list is never left behind!
+    for (let c of classes) {
+      const students = await Student.find({
+        $or: [
+          { classId: c._id }, 
+          { standard: c.standard, section: c.section }
+        ],
+        isActive: true
+      }).select('name rollNo');
+      
+      c.students = students;
+    }
+    
     ok(res, classes);
   } catch (e) { err(res, e.message); }
 });
@@ -506,11 +561,25 @@ router.get('/classes/:id', auth, async (req, res) => {
   try {
     const c = await Class.findById(req.params.id)
       .populate('classTeacher', 'name email')
-      .populate('students', 'name rollNo feeStatus');
+      .lean();
+      
+    if (!c) return err(res, 'Class not found', 404);
+
+    // 🟢 BULLETPROOF SYNC: Find every single active student matching this class
+    const students = await Student.find({
+      $or: [
+        { classId: c._id }, 
+        { standard: c.standard, section: c.section }
+      ],
+      isActive: true
+    }).select('name rollNo feeStatus');
+
+    c.students = students;
     ok(res, c);
   } catch (e) { err(res, e.message); }
 });
 
+// ... Leave your router.post('/classes') and router.put('/classes/:id') as they are!
 router.post('/classes', adminOnly, async (req, res) => {
   try {
     const { standard, section } = req.body;
@@ -691,78 +760,196 @@ router.post('/attendance', auth, async (req, res) => {
 // ════════════════════════════════════════════════════════════════
 // EXAMINATIONS & RESULTS
 // ════════════════════════════════════════════════════════════════
+// router.get('/exams', auth, async (req, res) => {
+//   try {
+//     const { standard, type, upcoming } = req.query;
+//     const q = {};
+//     if (standard) q.standard = standard;
+//     if (type) q.type = type;
+//     if (upcoming) q.date = { $gte: new Date() };
+//     const exams = await Exam.find(q).populate('createdBy', 'name').sort({ date: -1 });
+//     ok(res, exams);
+//   } catch (e) { err(res, e.message); }
+// });
+
+// router.post('/exams', auth, async (req, res) => {
+//   try {
+//     const exam = await Exam.create({ ...req.body, createdBy: req.user._id });
+//     ok(res, exam, 'Exam created');
+//   } catch (e) { err(res, e.message); }
+// });
+
+// router.put('/exams/:id', auth, async (req, res) => {
+//   try {
+//     const exam = await Exam.findByIdAndUpdate(req.params.id, req.body, { new: true });
+//     ok(res, exam, 'Exam updated');
+//   } catch (e) { err(res, e.message); }
+// });
+
+// router.delete('/exams/:id', adminOnly, async (req, res) => {
+//   try {
+//     await Exam.findByIdAndDelete(req.params.id);
+//     ok(res, null, 'Exam deleted');
+//   } catch (e) { err(res, e.message); }
+// });
+
+// // Results
+// router.get('/results', auth, async (req, res) => {
+//   try {
+//     const { examId, studentId, standard } = req.query;
+//     const q = {};
+//     if (examId) q.exam = examId;
+//     if (studentId) q.student = studentId;
+//     const results = await Result.find(q)
+//       .populate('student', 'name rollNo standard section')
+//       .populate('exam', 'name subject totalMarks date type')
+//       .sort({ createdAt: -1 });
+//     ok(res, results);
+//   } catch (e) { err(res, e.message); }
+// });
+
+// router.post('/results', auth, async (req, res) => {
+//   try {
+//     // bulk enter results: body.results = [{ student, exam, marksObtained, totalMarks }]
+//     const { results } = req.body;
+//     const graded = results.map(r => {
+//       const pct = (r.marksObtained / r.totalMarks) * 100;
+//       return {
+//         ...r, enteredBy: req.user._id,
+//         grade: pct >= 90 ? 'A+' : pct >= 80 ? 'A' : pct >= 70 ? 'B+' : pct >= 60 ? 'B' : pct >= 50 ? 'C' : 'F',
+//       };
+//     });
+//     const ops = graded.map(r => ({
+//       updateOne: {
+//         filter: { student: r.student, exam: r.exam },
+//         update: { $set: r },
+//         upsert: true,
+//       },
+//     }));
+//     await Result.bulkWrite(ops);
+//     await ActivityLog.create({ user: req.user._id, action: 'Results Entered', module: 'Exams', details: `Results entered for ${results.length} students` });
+//     ok(res, null, 'Results saved');
+//   } catch (e) { err(res, e.message); }
+// });
+// ════════════════════════════════════════════════════════════════
+// EXAMINATIONS, RESULTS & MARKS (Bulletproof Sync)
+// ════════════════════════════════════════════════════════════════
 router.get('/exams', auth, async (req, res) => {
   try {
     const { standard, type, upcoming } = req.query;
     const q = {};
-    if (standard) q.standard = standard;
+    
+    // 🟢 FIX 1: Flexible matching so "Class 10" and "10" always match perfectly!
+    if (standard) {
+      const baseStd = standard.replace('Class ', '').trim();
+      q.$or = [
+        { standard: baseStd },
+        { standard: `Class ${baseStd}` },
+        { standard: standard }
+      ];
+    }
+    
     if (type) q.type = type;
-    if (upcoming) q.date = { $gte: new Date() };
+    if (upcoming) {
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      q.date = { $gte: yesterday }; // Keeps today's exams visible all day!
+    }
+    
     const exams = await Exam.find(q).populate('createdBy', 'name').sort({ date: -1 });
-    ok(res, exams);
-  } catch (e) { err(res, e.message); }
+    res.json({ success: true, data: exams });
+  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });
 
 router.post('/exams', auth, async (req, res) => {
   try {
     const exam = await Exam.create({ ...req.body, createdBy: req.user._id });
-    ok(res, exam, 'Exam created');
-  } catch (e) { err(res, e.message); }
+    res.json({ success: true, data: exam, message: 'Exam created' });
+  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });
 
 router.put('/exams/:id', auth, async (req, res) => {
   try {
     const exam = await Exam.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    ok(res, exam, 'Exam updated');
-  } catch (e) { err(res, e.message); }
+    res.json({ success: true, data: exam, message: 'Exam updated' });
+  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });
 
 router.delete('/exams/:id', adminOnly, async (req, res) => {
   try {
     await Exam.findByIdAndDelete(req.params.id);
-    ok(res, null, 'Exam deleted');
-  } catch (e) { err(res, e.message); }
+    res.json({ success: true, data: null, message: 'Exam deleted' });
+  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });
 
-// Results
+// 🟢 FIX 2: BRAND NEW MARKS ENTRY SYNC
+router.get('/marks', auth, async (req, res) => {
+  try {
+    const { examTitle, subject } = req.query;
+    const exam = await Exam.findOne({ name: examTitle, subject });
+    if (!exam) return res.json({ success: true, data: { records: [] } });
+    
+    const results = await Result.find({ exam: exam._id });
+    const records = results.map(r => ({ studentId: r.student, marksObtained: r.marksObtained }));
+    res.json({ success: true, data: { records } });
+  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+});
+
+router.post('/marks', adminOnly, async (req, res) => {
+  try {
+    const { examType, examTitle, standard, subject, maxMarks, records } = req.body;
+    
+    // Find or Create the Exam to ensure the student has a parent record to view
+    let exam = await Exam.findOne({ name: examTitle, subject: subject });
+    if (!exam) {
+      exam = await Exam.create({
+        name: examTitle, type: examType || 'Formative', standard: standard,
+        subject: subject, totalMarks: maxMarks || 100, date: new Date(), createdBy: req.user._id
+      });
+    } else {
+      exam.totalMarks = maxMarks || 100;
+      await exam.save();
+    }
+
+    // Upsert the results exactly where the Student Dashboard looks for them
+    const ops = records.map(r => {
+      let marks = Number(r.marksObtained) || 0;
+      let total = Number(maxMarks) || 100;
+      let pct = (marks / total) * 100;
+      let grade = r.isAbsent ? 'Abs' : (pct >= 90 ? 'A+' : pct >= 80 ? 'A' : pct >= 70 ? 'B+' : pct >= 60 ? 'B' : pct >= 50 ? 'C' : 'F');
+
+      return {
+        updateOne: {
+          filter: { student: r.studentId, exam: exam._id },
+          update: { 
+            $set: { student: r.studentId, exam: exam._id, marksObtained: marks, totalMarks: total, grade, enteredBy: req.user._id } 
+          },
+          upsert: true
+        }
+      };
+    });
+
+    if (ops.length > 0) await Result.bulkWrite(ops);
+    await ActivityLog.create({ user: req.user._id, action: 'Marks Entered', module: 'Exams', details: `Entered marks for ${examTitle} (${subject})` });
+    
+    res.json({ success: true, message: 'Marks successfully translated to Student Results!' });
+  } catch (e) { 
+    console.error("Marks Save Error:", e);
+    res.status(500).json({ success: false, message: e.message }); 
+  }
+});
+
+// Results (Legacy Fallback)
 router.get('/results', auth, async (req, res) => {
   try {
-    const { examId, studentId, standard } = req.query;
+    const { examId, studentId } = req.query;
     const q = {};
     if (examId) q.exam = examId;
     if (studentId) q.student = studentId;
-    const results = await Result.find(q)
-      .populate('student', 'name rollNo standard section')
-      .populate('exam', 'name subject totalMarks date type')
-      .sort({ createdAt: -1 });
-    ok(res, results);
-  } catch (e) { err(res, e.message); }
+    const results = await Result.find(q).populate('student', 'name rollNo standard section').populate('exam', 'name subject totalMarks date type').sort({ createdAt: -1 });
+    res.json({ success: true, data: results });
+  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });
-
-router.post('/results', auth, async (req, res) => {
-  try {
-    // bulk enter results: body.results = [{ student, exam, marksObtained, totalMarks }]
-    const { results } = req.body;
-    const graded = results.map(r => {
-      const pct = (r.marksObtained / r.totalMarks) * 100;
-      return {
-        ...r, enteredBy: req.user._id,
-        grade: pct >= 90 ? 'A+' : pct >= 80 ? 'A' : pct >= 70 ? 'B+' : pct >= 60 ? 'B' : pct >= 50 ? 'C' : 'F',
-      };
-    });
-    const ops = graded.map(r => ({
-      updateOne: {
-        filter: { student: r.student, exam: r.exam },
-        update: { $set: r },
-        upsert: true,
-      },
-    }));
-    await Result.bulkWrite(ops);
-    await ActivityLog.create({ user: req.user._id, action: 'Results Entered', module: 'Exams', details: `Results entered for ${results.length} students` });
-    ok(res, null, 'Results saved');
-  } catch (e) { err(res, e.message); }
-});
-
 // Performance summary
 router.get('/results/performance/:studentId', auth, async (req, res) => {
   try {
@@ -1366,5 +1553,186 @@ router.post('/auth/register', adminOnly, async (req, res) => {
     res.status(500).json({ success: false, message: e.message });
   }
 });
+
+
+// ════════════════════════════════════════════════════════════════
+// 🎓 STUDENT PORTAL ROUTES
+// ════════════════════════════════════════════════════════════════
+
+// 🟢 SUPER-FINDER: Guarantees we find the Student Profile
+const getStudent = async (req) => {
+  const userId = req.user.id || req.user._id;
+  
+  let student = await Student.findOne({ user: userId }).populate('classId', 'name standard section');
+  if (student) return student;
+
+  student = await Student.findById(userId).populate('classId', 'name standard section');
+  if (student) return student;
+
+  const userAccount = await User.findById(userId);
+  if (userAccount && userAccount.email) {
+    student = await Student.findOne({ email: userAccount.email }).populate('classId', 'name standard section');
+    if (student) return student;
+  }
+  return null;
+};
+
+// 1. GET PROFILE
+router.get('/student/profile', auth, async (req, res) => {
+  try {
+    const student = await getStudent(req);
+    if (!student) return res.status(404).json({ success: false, message: 'Student profile not found.' });
+    res.json({ success: true, data: student });
+  } catch (error) { res.status(500).json({ success: false, message: error.message }); }
+});
+
+// 2. GET DASHBOARD STATS
+router.get('/student/dashboard/stats', auth, async (req, res) => {
+  try {
+    const student = await getStudent(req);
+    if (!student) return res.status(404).json({ success: false, message: 'Student not found' });
+
+    const totalAtt = await Attendance.countDocuments({ student: student._id });
+    const presentAtt = await Attendance.countDocuments({ student: student._id, status: 'Present' });
+    const attendancePct = totalAtt > 0 ? Math.round((presentAtt / totalAtt) * 100) : 0;
+    const attendanceHistory = await Attendance.find({ student: student._id }).sort({ date: -1 }).limit(15);
+    const latestResult = await Result.findOne({ student: student._id }).sort({ createdAt: -1 });
+    const upcomingExams = await Exam.countDocuments({ standard: student.standard, date: { $gte: new Date() } });
+
+    let pendingHW = 0;
+    if (student.classId) {
+      const totalHW = await Homework.countDocuments({ classId: student.classId });
+      const submittedHW = await Homework.countDocuments({ classId: student.classId, 'submissions.student': student._id });
+      pendingHW = Math.max(0, totalHW - submittedHW);
+    }
+
+    // 🟢 BULLETPROOF FEE CALCULATION (Checks both old and new fee systems)
+    let feeDue = 0;
+    
+    // Check old Fee model
+    try {
+      const oldFees = await Fee.find({ student: student._id, status: { $in: ['Pending', 'Overdue', 'Partial'] } });
+      feeDue += oldFees.reduce((sum, f) => sum + ((Number(f.amount) || 0) - (Number(f.paidAmount) || 0)), 0);
+    } catch(e) {}
+
+    // Check new FeeStructure & FeePayment model
+    try {
+      const FeeStructure = mongoose.model('FeeStructure');
+      const FeePayment = mongoose.model('FeePayment');
+      const structures = await FeeStructure.find({ standard: student.standard });
+      const payments = await FeePayment.find({ studentId: student._id });
+      
+      structures.forEach(s => {
+        const paid = payments
+          .filter(p => p.feeStructureId.toString() === s._id.toString())
+          .reduce((sum, p) => sum + p.amountPaid + (p.discount || 0), 0);
+        if (s.amount - paid > 0) feeDue += (s.amount - paid);
+      });
+    } catch(e) {}
+
+    res.json({
+      success: true,
+      data: { totalDays: totalAtt, presentDays: presentAtt, attendancePct, attendanceHistory, latestResult: latestResult ? latestResult.grade : 'N/A', upcomingExams, pendingHW, feeDue }
+    });
+  } catch (error) { res.status(500).json({ success: false, message: error.message }); }
+});
+
+router.get('/student/dashboard/activity', auth, async (req, res) => {
+  try {
+    const student = await getStudent(req);
+    if (!student) return res.json({ success: true, data: [] });
+
+    const notices = await Announcement.find({ audience: { $in: ['All', 'Student'] } }).sort({ createdAt: -1 }).limit(3);
+    const results = await Result.find({ student: student._id }).populate('exam', 'name').sort({ createdAt: -1 }).limit(2);
+
+    const activities = [
+      ...notices.map(n => ({ type: 'notice', text: `New Notice: ${n.title}`, time: new Date(n.createdAt).toLocaleDateString() })),
+      ...results.map(r => ({ type: 'exam', text: `Result Published: ${r.exam?.name} (${r.grade})`, time: new Date(r.createdAt).toLocaleDateString() }))
+    ].sort((a, b) => new Date(b.time) - new Date(a.time)).slice(0, 5);
+
+    res.json({ success: true, data: activities });
+  } catch (error) { res.status(500).json({ success: false, message: error.message }); }
+});
+// 4. GET MY FEES
+router.get('/student/my-fees', auth, async (req, res) => {
+  try {
+    const student = await getStudent(req);
+    if (!student) return res.status(404).json({ success: false, message: 'Student not found' });
+    
+    let feesList = [];
+
+    // 🟢 BULLETPROOF FETCH 1: New FeeStructure System
+    try {
+      const FeeStructure = mongoose.model('FeeStructure');
+      const FeePayment = mongoose.model('FeePayment');
+      const structures = await FeeStructure.find({ standard: student.standard }).sort({ dueDate: -1 });
+      const payments = await FeePayment.find({ studentId: student._id });
+
+      if (structures.length > 0) {
+        const newSystemFees = structures.map(s => {
+          const paid = payments
+            .filter(p => p.feeStructureId.toString() === s._id.toString())
+            .reduce((sum, p) => sum + p.amountPaid + (p.discount || 0), 0);
+
+          const balance = s.amount - paid;
+          let status = 'Pending';
+          if (balance <= 0) status = 'Paid';
+          else if (paid > 0) status = 'Partial';
+          else if (new Date(s.dueDate) < new Date()) status = 'Overdue';
+
+          return {
+            _id: s._id,
+            feeType: s.title || s.feeType || 'Class Fee',
+            amount: s.amount,
+            dueDate: s.dueDate,
+            paidAmount: paid,
+            balance: balance,
+            status: status
+          };
+        });
+        feesList = [...feesList, ...newSystemFees];
+      }
+    } catch(e) { console.log("FeeStructure check skipped"); }
+
+    // 🟢 BULLETPROOF FETCH 2: Old Manual Fee System
+    try {
+      const oldFees = await Fee.find({ student: student._id }).sort({ dueDate: -1 });
+      if (oldFees.length > 0) {
+        const manualFees = oldFees.map(f => {
+          const amount = Number(f.amount) || 0;
+          const paid = Number(f.paidAmount) || 0;
+          return {
+            _id: f._id,
+            feeType: f.feeType || 'Manual Fee',
+            amount: amount,
+            dueDate: f.dueDate,
+            paidAmount: paid,
+            balance: amount - paid,
+            status: f.status
+          };
+        });
+        feesList = [...feesList, ...manualFees];
+      }
+    } catch(e) { console.log("Old Fee check skipped"); }
+
+    res.json({ success: true, data: feesList }); 
+  } catch (error) { res.status(500).json({ success: false, message: error.message }); }
+});
+// 3. GET RECENT ACTIVITY
+
+
+
+// 5. GET MY RESULTS
+router.get('/student/my-results', auth, async (req, res) => {
+  try {
+    const student = await getStudent(req);
+    if (!student) return res.status(404).json({ success: false, message: 'Student not found' });
+    const results = await Result.find({ student: student._id }).populate('exam', 'name subject totalMarks').sort({ createdAt: -1 });
+    res.json({ success: true, data: results });
+  } catch (error) { res.status(500).json({ success: false, message: error.message }); }
+});
+
+// Make sure this is still at the very bottom!
+// export default router;
 
 export default router;

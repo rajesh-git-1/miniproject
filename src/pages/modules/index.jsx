@@ -749,176 +749,6 @@ export function HousesCreatePage() {
   );
 }
 
-// ════════════════════════════════════════════════════════════════
-// 4. ATTENDANCE PAGE
-// ════════════════════════════════════════════════════════════════
-// export function AttendancePage() {
-//   const token = useToken();
-//   const { data: classes } = useFetch('/classes');
-//   const [classId, setClassId] = useState('');
-//   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-//   const [students, setStudents] = useState([]);
-//   const [records, setRecords] = useState({});
-//   const [saving, setSaving] = useState(false);
-//   const [waNotif, setWaNotif] = useState(null); // whatsapp notification result
-//   const { show, Toast } = useToast();
-
-//   // useEffect(() => {
-//   //   if (!classId) return;
-//   //   const cls = (classes || []).find(c => c._id === classId);
-//   //   setStudents(cls?.students || []);
-//   //   setRecords({});
-//   //   setWaNotif(null);
-//   // }, [classId, classes]);
-//   useEffect(() => {
-//   if (!classId) return;
-  
-//   // 1. Set the students for the class
-//   const cls = (classes || []).find(c => c._id === classId);
-//   setStudents(cls?.students || []);
-  
-//   // 2. FETCH PREVIOUS DATA (Add this part!)
-//   const fetchExisting = async () => {
-//     // This calls your backend to see if a record for this date exists
-//     const r = await call(token, 'GET', `/attendance?classId=${classId}&date=${date}`);
-//     if (r.success && r.data) {
-//       // If data exists, fill the checkboxes with the saved statuses
-//       const existingRecords = {};
-//       r.data.records.forEach(rec => {
-//         existingRecords[rec.studentId] = rec.status;
-//       });
-//       setRecords(existingRecords);
-//     } else {
-//       setRecords({}); // Clear if no previous data found
-//     }
-//   };
-
-//   fetchExisting();
-//   setWaNotif(null);
-// }, [classId, date, classes]); // Added 'date' to the dependency array
-// // --- PASTE THIS NEW EFFECT BELOW YOUR EXISTING ONE ---
-// useEffect(() => {
-//   const fetchPreviousAttendance = async () => {
-//     if (!classId || !date) return;
-    
-//     // This calls your backend to see if data exists for this specific day
-//     const r = await call(token, 'GET', `/attendance?classId=${classId}&date=${date}`);
-    
-//     if (r.success && r.data && r.data.length > 0) {
-//       const existingRecords = {};
-//       // Map the individual MongoDB records (the ones you showed me) to the UI
-//       r.data.forEach(record => {
-//         existingRecords[record.student] = record.status;
-//       });
-//       setRecords(existingRecords);
-//     } else {
-//       // If no data found for this date, reset to default (everyone Present)
-//       setRecords({}); 
-//     }
-//   };
-
-//   fetchPreviousAttendance();
-// }, [classId, date, token]); // Re-runs when you change the class or the date
-
-//   const toggle = (id, status) => setRecords(r => ({ ...r, [id]: status }));
-//   const markAll = s => { const r = {}; students.forEach(st => r[st._id] = s); setRecords(r); };
-
-//   const submit = async () => {
-//     setSaving(true);
-//     setWaNotif(null);
-//     const recs = students.map(s => ({ studentId: s._id, status: records[s._id] || 'Present' }));
-//     const r = await call(token, 'POST', '/attendance', { classId, date, records: recs });
-//     setSaving(false);
-//     if (r.success) {
-//       show('Attendance saved!');
-//       if (r.data?.whatsapp) setWaNotif(r.data.whatsapp);
-//     } else {
-//       show(r.message || 'Failed', false);
-//     }
-//   };
-
-//   const SC = { Present: C.success, Absent: C.danger, Late: C.warning };
-
-//   return (
-//     <PageWrap>
-//       <Toast />
-//       <PageHeader title="Mark Attendance" subtitle="Daily class attendance" />
-//       <div style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
-//         <select value={classId} onChange={e => setClassId(e.target.value)} style={{ width: 180 }}>
-//           <option value="">Select Class</option>
-//           {(classes || []).map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
-//         </select>
-//         <input type="date" value={date} onChange={e => setDate(e.target.value)} style={{ width: 170 }} />
-//         <SuccessBtn small onClick={() => markAll('Present')}>All Present</SuccessBtn>
-//         <DangerBtn small onClick={() => markAll('Absent')}>All Absent</DangerBtn>
-//       </div>
-//       {classId && (
-//         <Card>
-//           {!students.length
-//             ? <div style={{ textAlign: 'center', padding: 40, color: C.muted }}>No students enrolled in this class</div>
-//             : <>
-//               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
-//                 {students.map((s, i) => {
-//                   const st = records[s._id] || 'Present';
-//                   const h = HOUSES.find(h => h.name === s.house);
-//                   return (
-//                     <div key={s._id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 8, background: C.alt, border: `1px solid ${C.border}`, animation: `fadeUp .3s ease ${i * .02}s both` }}>
-//                       <div style={{ width: 32, height: 32, borderRadius: '50%', background: SC[st] + '20', border: `1.5px solid ${SC[st]}55`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: SC[st], fontWeight: 700, fontSize: 13, flexShrink: 0 }}>{s.name?.charAt(0)}</div>
-//                       <div style={{ flex: 1 }}>
-//                         <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{s.name}</div>
-//                         <div style={{ fontSize: 11, color: C.muted }}>{s.rollNo}{h ? ` · ${h.emoji} ${h.name}` : ''}</div>
-//                       </div>
-//                       <div style={{ display: 'flex', gap: 6 }}>
-//                         {['Present', 'Absent', 'Late'].map(stat => (
-//                           <button key={stat} onClick={() => toggle(s._id, stat)}
-//                             style={{ padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 700, cursor: 'pointer', background: st === stat ? SC[stat] + '22' : C.surface, border: `1px solid ${st === stat ? SC[stat] + '66' : C.border}`, color: st === stat ? SC[stat] : C.muted, transition: 'all .15s' }}>
-//                             {stat}
-//                           </button>
-//                         ))}
-//                       </div>
-//                     </div>
-//                   );
-//                 })}
-//               </div>
-//               <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-//                 <Btn onClick={submit} disabled={saving}>{saving ? 'Saving…' : 'Save Attendance'}</Btn>
-//                 <span style={{ fontSize: 12, color: C.muted, marginLeft: 'auto' }}>
-//                   P:{Object.values(records).filter(v => v === 'Present').length} A:{Object.values(records).filter(v => v === 'Absent').length} L:{Object.values(records).filter(v => v === 'Late').length}
-//                 </span>
-//               </div>
-//               {/* WhatsApp Notification Result Banner */}
-//               {waNotif && (
-//                 <div style={{ marginTop: 14, padding: '12px 16px', borderRadius: 10, background: 'linear-gradient(135deg,#25d36618,#128c7e12)', border: '1px solid #25d36640', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', animation: 'fadeUp .4s ease' }}>
-//                   <span style={{ fontSize: 20 }}>📲</span>
-//                   <div style={{ flex: 1 }}>
-//                     <div style={{ fontSize: 13, fontWeight: 700, color: '#25d366' }}>WhatsApp Notifications</div>
-//                     <div style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>
-//                       {waNotif.notified > 0 && <span style={{ color: '#25d366', marginRight: 10 }}>✓ {waNotif.notified} parent{waNotif.notified > 1 ? 's' : ''} notified</span>}
-//                       {waNotif.failed > 0 && <span style={{ color: C.danger, marginRight: 10 }}>✗ {waNotif.failed} failed</span>}
-//                       {waNotif.noPhone > 0 && <span style={{ color: C.warning }}>⚠ {waNotif.noPhone} student{waNotif.noPhone > 1 ? 's' : ''} missing parent phone</span>}
-//                       {waNotif.notified === 0 && waNotif.failed === 0 && waNotif.noPhone === 0 && <span>No absent students — no messages sent</span>}
-//                     </div>
-//                   </div>
-//                 </div>
-//               )}
-//             </>
-//           }
-//         </Card>
-//       )}
-//     </PageWrap>
-//   );
-// }
-
-
-
-
-
-
-
-
-
-// import React, { useState, useEffect } from 'react';
-// Assuming your other imports (useToken, useFetch, useToast, C, HOUSES, etc.) are at the top
 
 export function AttendancePage() {
   const token = useToken();
@@ -930,29 +760,31 @@ export function AttendancePage() {
   const [records, setRecords] = useState({});
   const [saving, setSaving] = useState(false);
   const [waNotif, setWaNotif] = useState(null);
-  
+
   // REAL DATA FETCH: Class Trend & Monthly Average
   const { data: classStats } = useFetch(classId ? `/attendance/trend?classId=${classId}&date=${date}` : null);
-  
+
   const { show, Toast } = useToast();
+
+  const [selectedStudent, setSelectedStudent] = useState(null);
 
   // 1. Load Students and Sync Previous Data from MongoDB
   useEffect(() => {
     if (!classId) return;
-    
+
     // Set the list of students first
     const cls = (classes || []).find(c => c._id === classId);
     setStudents(cls?.students || []);
-    
+
     const fetchAttendance = async () => {
       // GET request to find if records exist for this specific date
       const r = await call(token, 'GET', `/attendance?classId=${classId}&date=${date}`);
-      
-      if (r.success && r.data && r.data.length > 0) {
+
+      if (r.success && r.data && r.data.attendance && r.data.attendance.length > 0) {
         const existing = {};
         // Map individual MongoDB documents to our UI state
-        r.data.forEach(rec => {
-          const sId = rec.student || rec.studentId;
+        r.data.attendance.forEach(rec => {
+          const sId = (rec.student && rec.student._id) ? rec.student._id : (rec.student || rec.studentId);
           existing[sId] = rec.status;
         });
         setRecords(existing);
@@ -988,28 +820,30 @@ export function AttendancePage() {
     <PageWrap>
       <Toast />
       <PageHeader title="Attendance Intelligence" subtitle="Track daily presence and analyze history" />
-      
+
       {/* Filters Section */}
-      <div style={{ display: 'flex', gap: 12, marginBottom: 24, flexWrap: 'wrap', alignItems: 'center', background: C.surface, padding: '16px', borderRadius: '16px', border: `1px solid ${C.border}` }}>
+      {!selectedStudent ? (
+        <>
+          <div style={{ display: 'flex', gap: 12, marginBottom: 24, flexWrap: 'wrap', alignItems: 'center', background: C.surface, padding: '16px', borderRadius: '16px', border: `1px solid ${C.border}` }}>
         <div style={{ display: 'flex', flexDir: 'column', gap: 4 }}>
           <label style={{ fontSize: 10, fontWeight: 800, color: C.muted, textTransform: 'uppercase' }}>Select Class</label>
-          <select 
-  value={classId} 
-  onChange={e => setClassId(e.target.value)} 
-  disabled={classesLoading} 
-  style={{ width: 180, borderRadius: 8, opacity: classesLoading ? 0.6 : 1 }}
->
-  {/* If it's loading, tell the user! If not, show "Choose Class..." */}
-  <option value="">
-    {classesLoading ? '⏳ Loading classes...' : 'Choose Class...'}
-  </option>
-  
-  {(classes || []).map(c => (
-    <option key={c._id} value={c._id}>{c.name}</option>
-  ))}
-</select>
+          <select
+            value={classId}
+            onChange={e => setClassId(e.target.value)}
+            disabled={classesLoading}
+            style={{ width: 180, borderRadius: 8, opacity: classesLoading ? 0.6 : 1 }}
+          >
+            {/* If it's loading, tell the user! If not, show "Choose Class..." */}
+            <option value="">
+              {classesLoading ? '⏳ Loading classes...' : 'Choose Class...'}
+            </option>
+
+            {(classes || []).map(c => (
+              <option key={c._id} value={c._id}>{c.name}</option>
+            ))}
+          </select>
           {/* <select value={classId} onChange={e => setClassId(e.target.value)} style={{ width: 180, borderRadius: 8 }}> */}
-            {/* <option value="">Choose Class...</option>
+          {/* <option value="">Choose Class...</option>
             {(classes || []).map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
           </select> */}
         </div>
@@ -1027,7 +861,7 @@ export function AttendancePage() {
 
       {classId && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
+
           {/* Main Attendance List */}
           <div className="lg:col-span-2">
             <Card style={{ padding: 0, overflow: 'hidden' }}>
@@ -1035,7 +869,7 @@ export function AttendancePage() {
                 <span style={{ fontWeight: 800, fontSize: 14 }}>Student Roster</span>
                 <span style={{ fontSize: 12, color: C.muted }}>Total: {students.length}</span>
               </div>
-              
+
               {!students.length ? (
                 <div style={{ textAlign: 'center', padding: 60, color: C.muted }}>No students enrolled</div>
               ) : (
@@ -1043,13 +877,14 @@ export function AttendancePage() {
                   {students.map((s, i) => {
                     const st = records[s._id] || 'Present';
                     return (
-                      <AttendanceRow 
-                        key={s._id} 
-                        student={s} 
-                        status={st} 
-                        onToggle={toggle} 
-                        colors={SC} 
+                      <AttendanceRow
+                        key={s._id}
+                        student={s}
+                        status={st}
+                        onToggle={toggle}
+                        colors={SC}
                         index={i}
+                        onClick={() => setSelectedStudent(s)}
                       />
                     );
                   })}
@@ -1061,8 +896,8 @@ export function AttendancePage() {
                   {saving ? 'Syncing...' : 'Confirm & Save'}
                 </Btn>
                 <div style={{ display: 'flex', gap: 15 }}>
-                   <StatMini label="P" val={Object.values(records).filter(v => v === 'Present' || (!v && true)).length} col={C.success} />
-                   <StatMini label="A" val={Object.values(records).filter(v => v === 'Absent').length} col={C.danger} />
+                  <StatMini label="P" val={students.filter(s => (records[s._id] || 'Present') === 'Present').length} col={C.success} />
+                  <StatMini label="A" val={students.filter(s => records[s._id] === 'Absent').length} col={C.danger} />
                 </div>
               </div>
             </Card>
@@ -1073,22 +908,22 @@ export function AttendancePage() {
             <Card style={{ padding: '20px' }}>
               <h4 style={{ margin: '0 0 15px 0', fontSize: 15 }}>Class Insights</h4>
               <div style={{ fontSize: 12, color: C.muted, marginBottom: 20 }}>Visualizing attendance health for <b>{date}</b></div>
-              
+
               {classStats ? (
                 <>
                   <div style={{ textAlign: 'center', padding: '20px 0' }}>
-                     <div style={{ fontSize: 24, fontWeight: 800, color: classStats.monthlyAverage > 80 ? C.success : C.warning }}>
-                       {classStats.monthlyAverage || 0}%
-                     </div>
-                     <div style={{ fontSize: 10, fontWeight: 700, color: C.muted }}>MONTHLY AVG</div>
+                    <div style={{ fontSize: 24, fontWeight: 800, color: classStats.monthlyAverage > 80 ? C.success : C.warning }}>
+                      {classStats.monthlyAverage || 0}%
+                    </div>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: C.muted }}>MONTHLY AVG</div>
                   </div>
-                  
+
                   <div style={{ height: 60, display: 'flex', alignItems: 'flex-end', gap: 4, marginBottom: 10 }}>
                     {/* Maps over the real trend array from your backend */}
                     {(classStats.trend || []).map((day, i) => (
-                      <div 
-                        key={i} 
-                        style={{ flex: 1, height: `${day.percentage}%`, background: day.percentage > 80 ? C.success : C.warning, borderRadius: '2px 2px 0 0' }} 
+                      <div
+                        key={i}
+                        style={{ flex: 1, height: `${day.percentage}%`, background: day.percentage > 80 ? C.success : C.warning, borderRadius: '2px 2px 0 0' }}
                         title={`${day.date}: ${day.percentage}%`}
                       />
                     ))}
@@ -1106,39 +941,115 @@ export function AttendancePage() {
           </div>
         </div>
       )}
+        </>
+      ) : (
+        <div style={{ animation: 'fadeUp .4s ease' }}>
+          <button 
+            onClick={() => setSelectedStudent(null)}
+            style={{ 
+              padding: '10px 20px', borderRadius: 8, background: C.surface, border: `1px solid ${C.border}`, 
+              color: C.text, fontWeight: 700, cursor: 'pointer', marginBottom: 20, display: 'inline-flex', alignItems: 'center', gap: 8,
+              transition: 'all 0.2s'
+            }}
+            className="hover:bg-gray-100"
+          >
+            ← Back to Roster
+          </button>
+          
+          <StudentAttendanceDetails studentId={selectedStudent._id} name={selectedStudent.name} />
+        </div>
+      )}
     </PageWrap>
   );
 }
 
 // ─── HELPER COMPONENTS ───
 
-function AttendanceRow({ student, status, onToggle, colors, index }) {
+function StudentAttendanceDetails({ studentId, name }) {
+  const { data: studentStat, loading } = useFetch(`/attendance/student-stats/${studentId}`);
+
+  if (loading || !studentStat) return <div style={{ padding: 40, textAlign: 'center', color: C.muted }}>Loading...</div>;
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: 24, boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+        <h2 style={{ fontSize: 20, fontWeight: 700, color: C.text, marginBottom: 16 }}>Attendance Dashboard - {name}</h2>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 24 }}>
+          <div style={{ padding: 16, background: C.bg, borderRadius: 8, border: `1px solid ${C.border}`, textAlign: "center" }}>
+            <div style={{ fontSize: 12, color: C.muted, textTransform: "uppercase", fontWeight: 700 }}>Percentage</div>
+            <div style={{ fontSize: 28, color: studentStat?.percentage >= 75 ? C.success : C.warning, fontWeight: 700, marginTop: 4 }}>{studentStat?.percentage || 0}%</div>
+          </div>
+          <div style={{ padding: 16, background: C.bg, borderRadius: 8, border: `1px solid ${C.border}`, textAlign: "center" }}>
+            <div style={{ fontSize: 12, color: C.muted, textTransform: "uppercase", fontWeight: 700 }}>Total Days</div>
+            <div style={{ fontSize: 28, color: C.text, fontWeight: 700, marginTop: 4 }}>{studentStat?.totalDays || 0}</div>
+          </div>
+          <div style={{ padding: 16, background: C.bg, borderRadius: 8, border: `1px solid ${C.border}`, textAlign: "center" }}>
+            <div style={{ fontSize: 12, color: C.muted, textTransform: "uppercase", fontWeight: 700 }}>Present</div>
+            <div style={{ fontSize: 28, color: C.success, fontWeight: 700, marginTop: 4 }}>{studentStat?.presentDays || 0}</div>
+          </div>
+          <div style={{ padding: 16, background: C.bg, borderRadius: 8, border: `1px solid ${C.border}`, textAlign: "center" }}>
+            <div style={{ fontSize: 12, color: C.muted, textTransform: "uppercase", fontWeight: 700 }}>Absent</div>
+            <div style={{ fontSize: 28, color: C.danger, fontWeight: 700, marginTop: 4 }}>{(studentStat?.totalDays || 0) - (studentStat?.presentDays || 0)}</div>
+          </div>
+        </div>
+
+        <h3 style={{ fontSize: 16, fontWeight: 700, color: C.text, marginBottom: 16, borderBottom: `1px solid ${C.border}`, paddingBottom: 10 }}>Attendance History</h3>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, maxHeight: 400, overflowY: 'auto' }}>
+          {(!studentStat?.attendanceHistory || studentStat.attendanceHistory.length === 0) ? (
+            <div style={{ color: C.muted, fontSize: 14, textAlign: "center", padding: 20 }}>No attendance records found.</div>
+          ) : (
+            studentStat.attendanceHistory.map((record, i) => (
+              <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", background: C.surface, borderRadius: 8, border: `1px solid ${C.border}` }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: C.text }}>
+                  {new Date(record.date).toLocaleDateString("en-IN", { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
+                </div>
+                <div style={{
+                  padding: "4px 12px", borderRadius: 20, fontSize: 12, fontWeight: 700,
+                  background: record.status === 'Present' ? C.success + '15' : C.danger + '15',
+                  color: record.status === 'Present' ? C.success : C.danger
+                }}>
+                  {record.status}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AttendanceRow({ student, status, onToggle, colors, index, onClick }) {
   const h = HOUSES.find(house => house.name === student.house);
-  
+
   // REAL DATA FETCH: Individual Student's Yearly/Monthly Percentage
   const { data: studentStat } = useFetch(`/attendance/student-stats/${student._id}`);
-  
+
   // Use real data if available, fallback to 0 while loading
   const realPercentage = studentStat?.percentage || 0;
 
   return (
-    <div style={{ 
-      display: 'flex', alignItems: 'center', gap: 12, padding: '12px', borderRadius: 12, 
-      background: C.surface, border: `1px solid ${C.border}`, transition: 'all 0.2s',
-      animation: `fadeUp .3s ease ${index * .02}s both` 
-    }} className="hover:shadow-sm">
+    <div 
+      onClick={onClick}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 12, padding: '12px', borderRadius: 12,
+        background: C.surface, border: `1px solid ${C.border}`, transition: 'all 0.2s',
+        animation: `fadeUp .3s ease ${index * .02}s both`, cursor: 'pointer'
+      }} 
+      className="hover:shadow-sm"
+    >
       <div style={{ width: 36, height: 36, borderRadius: 10, background: colors[status] + '15', color: colors[status], display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 14 }}>
         {student.name?.charAt(0)}
       </div>
-      
+
       <div style={{ flex: 1 }}>
         <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>{student.name}</div>
         <div style={{ fontSize: 11, color: C.muted }}>Roll: {student.rollNo} {h && `• ${h.emoji} ${h.name}`}</div>
-        
+
         {/* Real Performance Bar based on database */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
           <div style={{ width: '60px', height: '4px', background: C.alt, borderRadius: 2, overflow: 'hidden' }}>
-             <div style={{ width: `${realPercentage}%`, height: '100%', background: realPercentage > 75 ? C.success : C.danger }} />
+            <div style={{ width: `${realPercentage}%`, height: '100%', background: realPercentage > 75 ? C.success : C.danger }} />
           </div>
           {studentStat && <span style={{ fontSize: 9, color: C.muted }}>{realPercentage}%</span>}
         </div>
@@ -1146,8 +1057,10 @@ function AttendanceRow({ student, status, onToggle, colors, index }) {
 
       <div style={{ display: 'flex', gap: 4 }}>
         {['Present', 'Absent', 'Late'].map(opt => (
-          <button key={opt} onClick={() => onToggle(student._id, opt)}
-            style={{ 
+          <button 
+            key={opt} 
+            onClick={(e) => { e.stopPropagation(); onToggle(student._id, opt); }}
+            style={{
               padding: '6px 12px', borderRadius: 8, fontSize: 10, fontWeight: 800, cursor: 'pointer',
               background: status === opt ? colors[opt] : 'transparent',
               border: `1px solid ${status === opt ? colors[opt] : C.border}`,
@@ -1183,6 +1096,7 @@ function WhatsAppBanner({ data }) {
         {data.notified > 0 && <div>✓ {data.notified} Messages sent</div>}
         {data.failed > 0 && <div style={{ color: C.danger }}>✗ {data.failed} Failed</div>}
         {data.noPhone > 0 && <div style={{ color: C.warning }}>⚠ {data.noPhone} No phone number</div>}
+        {data.notified === 0 && data.failed === 0 && data.noPhone === 0 && <div>No <b>newly</b> absent students found – (duplicate messages are prevented)</div>}
       </div>
     </div>
   );
@@ -1523,7 +1437,7 @@ export function FeesPage() {
   const { data: structuresData, reload: reloadStructures } = useFetch('/fees/structures');
   const structures = Array.isArray(structuresData) ? structuresData : (structuresData?.data || []);
 
- // --- COLLECTION TAB STATE ---
+  // --- COLLECTION TAB STATE ---
   const [selectedClass, setSelectedClass] = useState('');
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [paymentForm, setPaymentForm] = useState({ feeStructureId: '', amountPaid: '', discount: 0, fine: 0, paymentMethod: 'Cash', remarks: '' });
@@ -1537,10 +1451,10 @@ export function FeesPage() {
 
   const displayedStudents = students.filter(stu => {
     if (!searchId) return true; // If search is empty, show everyone
-    
+
     // Combine rollNo and email/username into one string to search against
     const idString = String(stu.rollNo || stu.email || stu.username || '').toLowerCase();
-    
+
     // Check if the typed search matches the ID string
     return idString.includes(searchId.toLowerCase());
   });
@@ -1590,13 +1504,13 @@ export function FeesPage() {
 
       {/* TABS */}
       <div style={{ display: 'flex', gap: 10, marginBottom: 20, borderBottom: `2px solid ${C.border}`, paddingBottom: 10 }}>
-        <button 
+        <button
           onClick={() => setActiveTab('collection')}
           style={{ padding: '8px 16px', borderRadius: 8, fontWeight: 700, background: activeTab === 'collection' ? C.accent : 'transparent', color: activeTab === 'collection' ? '#fff' : C.muted }}
         >
           💰 Collect Fees
         </button>
-        <button 
+        <button
           onClick={() => setActiveTab('setup')}
           style={{ padding: '8px 16px', borderRadius: 8, fontWeight: 700, background: activeTab === 'setup' ? C.accent : 'transparent', color: activeTab === 'setup' ? '#fff' : C.muted }}
         >
@@ -1610,19 +1524,19 @@ export function FeesPage() {
           <Card style={{ gridColumn: 'span 1' }}>
             <h3 style={{ marginTop: 0, color: C.text }}>Create New Fee Rule</h3>
             <FG label="Class" half={false}>
-              <select value={setupForm.standard} onChange={e => setSetupForm({...setupForm, standard: e.target.value})}>
+              <select value={setupForm.standard} onChange={e => setSetupForm({ ...setupForm, standard: e.target.value })}>
                 <option value="">-- Select Class --</option>
-                {['1','2','3','4','5','6','7','8','9','10'].map(s => <option key={s} value={s}>Class {s}</option>)}
+                {['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'].map(s => <option key={s} value={s}>Class {s}</option>)}
               </select>
             </FG>
             <FG label="Fee Type (e.g. Tuition, Transport)" half={false}>
-              <input value={setupForm.feeType} onChange={e => setSetupForm({...setupForm, feeType: e.target.value})} placeholder="Tuition Fee" />
+              <input value={setupForm.feeType} onChange={e => setSetupForm({ ...setupForm, feeType: e.target.value })} placeholder="Tuition Fee" />
             </FG>
             <FG label="Amount (₹)" half={false}>
-              <input type="number" value={setupForm.amount} onChange={e => setSetupForm({...setupForm, amount: e.target.value})} placeholder="50000" />
+              <input type="number" value={setupForm.amount} onChange={e => setSetupForm({ ...setupForm, amount: e.target.value })} placeholder="50000" />
             </FG>
             <FG label="Due Date" half={false}>
-              <input type="date" value={setupForm.dueDate} onChange={e => setSetupForm({...setupForm, dueDate: e.target.value})} />
+              <input type="date" value={setupForm.dueDate} onChange={e => setSetupForm({ ...setupForm, dueDate: e.target.value })} />
             </FG>
             <Btn onClick={handleCreateStructure} style={{ width: '100%', marginTop: 10 }}>💾 Save Rule</Btn>
           </Card>
@@ -1656,28 +1570,28 @@ export function FeesPage() {
       {/* ==================== COLLECTION TAB ==================== */}
       {activeTab === 'collection' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* LEFT: Select Student */}
-        <Card>
-          {/* <Card style={{ gridColumn: 'span 1' }}> */}
+          {/* LEFT: Select Student */}
+          <Card>
+            {/* <Card style={{ gridColumn: 'span 1' }}> */}
             <h3 style={{ marginTop: 0, color: C.text }}>1. Select Student</h3>
-            
+
             <FG label="Select Class" half={false}>
               <select value={selectedClass} onChange={e => { setSelectedClass(e.target.value); setSelectedStudent(null); setSearchId(''); }}>
                 <option value="">-- Class --</option>
-                {['1','2','3','4','5','6','7','8','9','10'].map(s => <option key={s} value={s}>Class {s}</option>)}
+                {['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'].map(s => <option key={s} value={s}>Class {s}</option>)}
               </select>
             </FG>
-            
+
             {selectedClass && (
               <>
                 {/* 🔍 THE NEW SEARCH BAR */}
                 <div style={{ marginTop: 16, marginBottom: 8 }}>
                   <FG label="Search by ID / Roll No" half={false}>
-                    <input 
-                      type="text" 
-                      placeholder="Enter ID..." 
-                      value={searchId} 
-                      onChange={e => setSearchId(e.target.value)} 
+                    <input
+                      type="text"
+                      placeholder="Enter ID..."
+                      value={searchId}
+                      onChange={e => setSearchId(e.target.value)}
                       style={{ border: `2px solid ${C.accent}` }} // Highlights the search box
                     />
                   </FG>
@@ -1690,11 +1604,11 @@ export function FeesPage() {
                     </div>
                   ) : (
                     displayedStudents.map(stu => (
-                      <div 
-                        key={stu._id} 
+                      <div
+                        key={stu._id}
                         onClick={() => setSelectedStudent(stu)}
-                        style={{ 
-                          padding: 12, border: `1px solid ${selectedStudent?._id === stu._id ? C.accent : C.border}`, 
+                        style={{
+                          padding: 12, border: `1px solid ${selectedStudent?._id === stu._id ? C.accent : C.border}`,
                           borderRadius: 8, marginBottom: 8, cursor: 'pointer',
                           background: selectedStudent?._id === stu._id ? C.accentDim : '#fff'
                         }}
@@ -1711,24 +1625,55 @@ export function FeesPage() {
 
           {/* RIGHT: Take Payment & History */}
           <Card>
-          {/* <Card style={{ gridColumn: 'span 2' }}> */}
+            {/* <Card style={{ gridColumn: 'span 2' }}> */}
             {!selectedStudent ? (
               <div style={{ textAlign: 'center', padding: 40, color: C.muted }}>👈 Select a student to manage fees</div>
             ) : (
               <>
-                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: `1px solid ${C.border}`, paddingBottom: 16, marginBottom: 16 }}>
-                  <div>
-                    <h2 style={{ margin: 0, color: C.text }}>{selectedStudent.name}</h2>
-                    <div style={{ color: C.muted }}>Class {selectedClass}</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: `1px solid ${C.border}`, paddingBottom: 16, marginBottom: 16 }}>
+                    <div>
+                      <h2 style={{ margin: 0, color: C.text }}>{selectedStudent.name}</h2>
+                      <div style={{ color: C.muted }}>Class {selectedClass}</div>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontSize: 11, color: C.muted, fontWeight: 800, textTransform: 'uppercase' }}>Total Remaining Fee</div>
+                      <h2 style={{ margin: 0, color: C.danger }}>
+                        ₹{classStructures.reduce((sum, s) => {
+                          const p = getPendingAmount(s._id, s.amount);
+                          return sum + (p > 0 ? p : 0);
+                        }, 0)}
+                      </h2>
+                    </div>
                   </div>
-                </div>
+
+                  {/* FEE SUMMARY (Per Component Breakdown) */}
+                  <div style={{ marginBottom: 24, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
+                    {classStructures.map(s => {
+                      const pending = getPendingAmount(s._id, s.amount);
+                      const paid = s.amount - pending;
+                      return (
+                        <div key={s._id} style={{ padding: '12px 16px', borderRadius: 8, background: pending > 0 ? C.danger + '0A' : C.success + '0A', border: `1px solid ${pending > 0 ? C.danger + '30' : C.success + '30'}` }}>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: C.text, display: 'flex', justifyContent: 'space-between' }}>
+                            <span>{s.feeType}</span>
+                            <span>₹{s.amount}</span>
+                          </div>
+                          <div style={{ fontSize: 12, color: C.muted, display: 'flex', justifyContent: 'space-between', marginTop: 6, alignItems: 'center' }}>
+                            <span>Paid: <span style={{ color: C.success, fontWeight: 700 }}>₹{paid}</span></span>
+                            <span style={{ fontWeight: 800, color: pending > 0 ? C.danger : C.success, fontSize: 13 }}>
+                              {pending > 0 ? `Dues: ₹${pending}` : 'Paid ✅'}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
 
                 {/* PAYMENT FORM */}
                 <div style={{ background: C.alt, padding: 16, borderRadius: 12, marginBottom: 24 }}>
                   <h4 style={{ margin: '0 0 16px 0' }}>Record New Payment</h4>
                   <div className="grid grid-cols-2 gap-4">
                     <FG label="Paying For" half={false}>
-                      <select value={paymentForm.feeStructureId} onChange={e => setPaymentForm({...paymentForm, feeStructureId: e.target.value})}>
+                      <select value={paymentForm.feeStructureId} onChange={e => setPaymentForm({ ...paymentForm, feeStructureId: e.target.value })}>
                         <option value="">-- Select Fee Component --</option>
                         {classStructures.map(s => {
                           const pending = getPendingAmount(s._id, s.amount);
@@ -1737,16 +1682,16 @@ export function FeesPage() {
                       </select>
                     </FG>
                     <FG label="Amount Paying (₹)" half={false}>
-                      <input type="number" value={paymentForm.amountPaid} onChange={e => setPaymentForm({...paymentForm, amountPaid: Number(e.target.value)})} />
+                      <input type="number" value={paymentForm.amountPaid} onChange={e => setPaymentForm({ ...paymentForm, amountPaid: Number(e.target.value) })} />
                     </FG>
                     <FG label="Discount / Scholarship (₹)" half={false}>
-                      <input type="number" value={paymentForm.discount} onChange={e => setPaymentForm({...paymentForm, discount: Number(e.target.value)})} />
+                      <input type="number" value={paymentForm.discount} onChange={e => setPaymentForm({ ...paymentForm, discount: Number(e.target.value) })} />
                     </FG>
                     <FG label="Late Fine (₹)" half={false}>
-                      <input type="number" value={paymentForm.fine} onChange={e => setPaymentForm({...paymentForm, fine: Number(e.target.value)})} />
+                      <input type="number" value={paymentForm.fine} onChange={e => setPaymentForm({ ...paymentForm, fine: Number(e.target.value) })} />
                     </FG>
                     <FG label="Payment Method" half={false}>
-                      <select value={paymentForm.paymentMethod} onChange={e => setPaymentForm({...paymentForm, paymentMethod: e.target.value})}>
+                      <select value={paymentForm.paymentMethod} onChange={e => setPaymentForm({ ...paymentForm, paymentMethod: e.target.value })}>
                         <option>Cash</option>
                         <option>Cheque</option>
                         <option>Bank Transfer</option>
@@ -1754,7 +1699,7 @@ export function FeesPage() {
                       </select>
                     </FG>
                     <FG label="Remarks (Optional)" half={false}>
-                      <input value={paymentForm.remarks} onChange={e => setPaymentForm({...paymentForm, remarks: e.target.value})} placeholder="Cheque #1234..." />
+                      <input value={paymentForm.remarks} onChange={e => setPaymentForm({ ...paymentForm, remarks: e.target.value })} placeholder="Cheque #1234..." />
                     </FG>
                   </div>
                   <Btn onClick={handleRecordPayment} style={{ marginTop: 16 }}>✅ Submit Payment</Btn>
@@ -2778,7 +2723,7 @@ export function TalentTestsPage() {
 //       {/* ==================== UPGRADED FEES TAB ==================== */}
 //       {!loading && tab === 'fees' && (
 //         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          
+
 //           {/* New KPI Cards */}
 //           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 //             <Card style={{ borderTop: `4px solid ${C.success}` }}>
@@ -2883,9 +2828,9 @@ export function ReportsPage() {
       { name: 'Class 5', count: 25 }, { name: 'Class 6', count: 20 }
     ],
     gradeDist: [
-      { _id: 'A+', count: 15 }, { _id: 'A', count: 28 }, 
-      { _id: 'B+', count: 35 }, { _id: 'B', count: 20 }, 
-      { _id: 'C', count: 8 },  { _id: 'F', count: 3 }
+      { _id: 'A+', count: 15 }, { _id: 'A', count: 28 },
+      { _id: 'B+', count: 35 }, { _id: 'B', count: 20 },
+      { _id: 'C', count: 8 }, { _id: 'F', count: 3 }
     ],
     feeTrend: [
       { _id: 'Jan', collected: 45000 }, { _id: 'Feb', collected: 52000 },
@@ -2911,23 +2856,23 @@ export function ReportsPage() {
   // Fee KPIs
   const totalFeesCollected = ft.reduce((sum, f) => sum + f.collected, 0);
   const avgMonthlyFee = totalFeesCollected / ft.length;
-  const bestMonth = [...ft].sort((a,b) => b.collected - a.collected)[0]._id;
+  const bestMonth = [...ft].sort((a, b) => b.collected - a.collected)[0]._id;
 
   return (
     <PageWrap>
       <PageHeader title="Reports & Analytics" subtitle="School-wide performance dashboard (Live View)" />
-      
+
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
         {['overview', 'fees', 'attendance', 'grades'].map(t => (
-          <button 
-            key={t} 
-            onClick={() => setTab(t)} 
-            style={{ 
-              padding: '7px 18px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', 
-              background: tab === t ? C.accentDim : C.surface, 
-              border: `1px solid ${tab === t ? C.accent : C.border}`, 
-              color: tab === t ? C.accent : C.muted, textTransform: 'capitalize' 
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            style={{
+              padding: '7px 18px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer',
+              background: tab === t ? C.accentDim : C.surface,
+              border: `1px solid ${tab === t ? C.accent : C.border}`,
+              color: tab === t ? C.accent : C.muted, textTransform: 'capitalize'
             }}
           >
             {t}
@@ -2981,7 +2926,7 @@ export function ReportsPage() {
             </Card>
             <Card style={{ borderTop: `4px solid ${C.accent}` }}>
               <div style={{ fontSize: 11, color: C.muted, fontWeight: 700 }}>MONTHLY AVG</div>
-              <div style={{ fontSize: 22, fontWeight: 800, color: C.text }}>₹{avgMonthlyFee.toLocaleString(undefined, {maximumFractionDigits:0})}</div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: C.text }}>₹{avgMonthlyFee.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
             </Card>
             <Card style={{ borderTop: `4px solid ${C.purple}` }}>
               <div style={{ fontSize: 11, color: C.muted, fontWeight: 700 }}>PEAK MONTH</div>
@@ -3190,11 +3135,11 @@ export function AdminDashboardPage() {
 
       {/* ─── TOP STAT CARDS (WITH HOVER & GLOW) ─── */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        
+
         {/* STUDENTS CARD */}
-        <div 
+        <div
           onClick={() => navigate('/dashboard/admin/students')}
-          style={{ 
+          style={{
             background: C.surface, padding: '24px', borderRadius: '20px', border: `1px solid ${C.border}`,
             cursor: 'pointer', transition: 'all 0.3s ease', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05)'
           }}
@@ -3211,9 +3156,9 @@ export function AdminDashboardPage() {
         </div>
 
         {/* TEACHERS CARD */}
-        <div 
+        <div
           onClick={() => navigate('/dashboard/admin/teachers')}
-          style={{ 
+          style={{
             background: C.surface, padding: '24px', borderRadius: '20px', border: `1px solid ${C.border}`,
             cursor: 'pointer', transition: 'all 0.3s ease', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05)'
           }}
@@ -3230,8 +3175,8 @@ export function AdminDashboardPage() {
         </div>
 
         {/* FEES CARD */}
-        <div 
-          style={{ 
+        <div
+          style={{
             background: 'linear-gradient(135deg, #0d9488 0%, #065f46 100%)', padding: '24px', borderRadius: '20px',
             boxShadow: '0 15px 30px -10px rgba(13, 148, 136, 0.4)'
           }}
@@ -3247,8 +3192,8 @@ export function AdminDashboardPage() {
         </div>
 
         {/* PENDING APPROVALS */}
-        <div 
-          style={{ 
+        <div
+          style={{
             background: C.surface, padding: '24px', borderRadius: '20px', border: `1px solid ${C.border}`,
             boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05)'
           }}
@@ -3265,7 +3210,7 @@ export function AdminDashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
+
         {/* ─── QUICK ACTIONS (Refined Grid) ─── */}
         <div className="lg:col-span-2">
           <Card style={{ padding: '28px', border: 'none' }}>
@@ -3273,21 +3218,21 @@ export function AdminDashboardPage() {
               <span style={{ color: C.accent }}>⚡</span> Control Center
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-2 gap-4">
-              <ActionButton 
+              <ActionButton
                 icon="👤" label="Add New User" sub="Students & Staff"
-                color="#4f46e5" bg="#eef2ff" onClick={() => navigate('/dashboard/admin/user-creation')} 
+                color="#4f46e5" bg="#eef2ff" onClick={() => navigate('/dashboard/admin/user-creation')}
               />
-              <ActionButton 
+              <ActionButton
                 icon="💳" label="Fee Management" sub="Ledger & Invoices"
-                color="#0d9488" bg="#ccfbf1" onClick={() => navigate('/dashboard/admin/fees')} 
+                color="#0d9488" bg="#ccfbf1" onClick={() => navigate('/dashboard/admin/fees')}
               />
-              <ActionButton 
+              <ActionButton
                 icon="📅" label="Attendance" sub="Live Marking"
-                color="#d97706" bg="#fef3c7" onClick={() => navigate('/dashboard/admin/attendance')} 
+                color="#d97706" bg="#fef3c7" onClick={() => navigate('/dashboard/admin/attendance')}
               />
-              <ActionButton 
+              <ActionButton
                 icon="📢" label="Broadcast" sub="All Departments"
-                color="#7c3aed" bg="#f3e8ff" onClick={() => navigate('/dashboard/admin/communication')} 
+                color="#7c3aed" bg="#f3e8ff" onClick={() => navigate('/dashboard/admin/communication')}
               />
             </div>
           </Card>
@@ -3328,7 +3273,7 @@ export function AdminDashboardPage() {
 
 function ActionButton({ icon, label, sub, color, bg, onClick }) {
   return (
-    <button 
+    <button
       onClick={onClick}
       className="group flex flex-col items-start p-5 rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.98]"
       style={{ background: C.surface, border: `1px solid ${C.border}`, textAlign: 'left', width: '100%', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)' }}
@@ -4066,117 +4011,261 @@ export function UserCreationPage() {
 // ════════════════════════════════════════════════════════════════
 export function InventoryPage() {
   const token = useToken();
+  const [tab, setTab] = useState('items'); // 'items' or 'categories'
   const [search, setSearch] = useState('');
   const [catFilt, setCatFilt] = useState('');
-  const [modal, setModal] = useState(null); // 'add' or 'edit'
-  const [editingItem, setEditingItem] = useState(null);
+  const [modal, setModal] = useState(null); // 'add_item', 'edit_item', 'edit_cat'
+  const [editingData, setEditingData] = useState(null);
   const { show, Toast } = useToast();
 
-  // Fetch real data from backend
-  const { data: invData, loading, error, reload } = useFetch('/inventory');
+  const { data: invData, loading: invLoading, reload: reloadInv } = useFetch('/inventory');
+  const { data: catData, loading: catLoading, reload: reloadCat } = useFetch('/inventory/categories');
 
-  // FIX: Safely handle the data whether it's an array directly or wrapped in a data object
   const items = Array.isArray(invData) ? invData : (invData?.data || []);
+  const categories = Array.isArray(catData) ? catData : (catData?.data || []);
 
-  const [form, setForm] = useState({ name: '', category: 'Furniture', quantity: 0, unit: 'pcs' });
+  const [form, setForm] = useState({});
+  const [newCatForm, setNewCatForm] = useState({ name: '', description: '', status: 'Active' });
 
-  // Filter items for search and category
   const filteredItems = items.filter(i =>
     (search === '' || (i.name && i.name.toLowerCase().includes(search.toLowerCase()))) &&
     (catFilt === '' || i.category === catFilt)
   );
 
-  const handleSave = async (e) => {
+  const handleSaveItem = async (e) => {
     e.preventDefault();
-    const method = modal === 'edit' ? 'PUT' : 'POST';
-    const url = modal === 'edit' ? `/inventory/${editingItem._id}` : '/inventory';
+    const method = modal === 'edit_item' ? 'PUT' : 'POST';
+    const url = modal === 'edit_item' ? `/inventory/${editingData._id}` : '/inventory';
 
-    // Send request to backend
-    const r = await call(token, method, url, form);
+    // Convert to numbers explicitly
+    const payload = { ...form };
+    if (payload.quantity !== undefined) payload.quantity = Number(payload.quantity);
+    if (payload.threshold !== undefined) payload.threshold = Number(payload.threshold);
+    if (payload.inUse !== undefined) payload.inUse = Number(payload.inUse);
+    if (payload.good !== undefined) payload.good = Number(payload.good);
+    if (payload.bad !== undefined) payload.bad = Number(payload.bad);
+    if (payload.maintenance !== undefined) payload.maintenance = Number(payload.maintenance);
 
+    const r = await call(token, method, url, payload);
     if (r.success) {
-      show(modal === 'edit' ? 'Item Updated Successfully!' : 'Item Added Successfully!');
+      show(modal === 'edit_item' ? 'Item Updated!' : 'Item Added!');
       setModal(null);
-      setEditingItem(null);
-      reload(); // Refresh table data from Database
-    } else {
-      show(r.message || "Failed to save item", false);
-    }
+      reloadInv();
+    } else show(r.message || "Failed to save item", false);
   };
 
-  const openEdit = (item) => {
-    setEditingItem(item);
-    setForm({
-      name: item.name,
-      category: item.category,
-      quantity: item.quantity,
-      unit: item.unit
-    });
-    setModal('edit');
-  };
-
-  const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this item?')) return;
+  const handleDeleteItem = async (id) => {
+    if (!window.confirm('Delete this item?')) return;
     const r = await call(token, 'DELETE', `/inventory/${id}`);
-    if (r.success) {
-      show('Item deleted successfully!');
-      reload();
-    } else {
-      show(r.message || "Failed to delete", false);
-    }
+    if (r.success) { show('Item deleted!'); reloadInv(); }
+    else show(r.message || "Failed to delete", false);
   };
 
-  const categories = ['Furniture', 'Electronics', 'Laboratory Equipment', 'Sports Equipment', 'Stationery'];
+  const handleCreateCat = async (e) => {
+    e.preventDefault();
+    const r = await call(token, 'POST', '/inventory/categories', newCatForm);
+    if (r.success) {
+      show('Category Created!');
+      setNewCatForm({ name: '', description: '', status: 'Active' });
+      reloadCat();
+    } else show(r.message || "Failed to create category", false);
+  };
+
+  const handleSaveCat = async (e) => {
+    e.preventDefault();
+    const r = await call(token, 'PUT', `/inventory/categories/${editingData._id}`, form);
+    if (r.success) {
+      show('Category Updated!');
+      setModal(null);
+      reloadCat();
+    } else show(r.message || "Failed to save category", false);
+  };
+
+  const handleDeleteCat = async (id) => {
+    if (!window.confirm('Delete this category?')) return;
+    const r = await call(token, 'DELETE', `/inventory/categories/${id}`);
+    if (r.success) { show('Category deleted!'); reloadCat(); }
+    else show(r.message || "Failed to delete", false);
+  };
 
   return (
     <PageWrap>
       <Toast />
-      <PageHeader title="Inventory Management" subtitle="Real-time Database Tracking"
-        action={<Btn onClick={() => { setForm({ name: '', category: 'Furniture', quantity: 0, unit: 'pcs' }); setModal('add'); }}>+ Add Item</Btn>}
+      <PageHeader title="Inventory Tracker" subtitle="Manage Items & Categories"
+        action={
+          tab === 'items' && (
+            <Btn onClick={() => {
+              setForm({ name: '', category: categories.length > 0 ? categories[0].name : '', quantity: 0, unit: 'pcs', threshold: 10 });
+              setModal('add_item');
+            }}>+ Add Item</Btn>
+          )
+        }
       />
 
-      <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search item name..." style={{ flex: 1 }} />
-        <select value={catFilt} onChange={e => setCatFilt(e.target.value)} style={{ width: 180 }}>
-          <option value="">All Categories</option>
-          {categories.map(c => <option key={c} value={c}>{c}</option>)}
-        </select>
+      {/* Traditional Tabs */}
+      <div style={{ display: 'flex', borderBottom: `2px solid ${C.border}`, marginBottom: 20 }}>
+        <div
+          onClick={() => setTab('items')}
+          style={{ padding: '12px 24px', cursor: 'pointer', borderBottom: tab === 'items' ? `3px solid ${C.accent}` : '3px solid transparent', fontWeight: tab === 'items' ? 700 : 500, color: tab === 'items' ? C.accent : C.muted, marginBottom: -2, transition: '0.2s' }}
+        >
+          Items Collection
+        </div>
+        <div
+          onClick={() => setTab('categories')}
+          style={{ padding: '12px 24px', cursor: 'pointer', borderBottom: tab === 'categories' ? `3px solid ${C.accent}` : '3px solid transparent', fontWeight: tab === 'categories' ? 700 : 500, color: tab === 'categories' ? C.accent : C.muted, marginBottom: -2, transition: '0.2s' }}
+        >
+          Manage Categories
+        </div>
       </div>
 
-      <Card>
-        <LoadState loading={loading} error={error} empty={!filteredItems.length}>
-          <Table keyFn={r => r._id} rows={filteredItems} cols={[
-            { label: 'Item ID', render: r => <span style={{ fontWeight: 700, color: C.accent }}>{r.itemId}</span> },
-            { label: 'Item Name', key: 'name' },
-            { label: 'Category', key: 'category' },
-            { label: 'Qty', render: r => <span style={{ fontWeight: 800 }}>{r.quantity} {r.unit}</span> },
-            { label: 'Status', render: r => <Badge label={r.status} color={r.status === 'In Stock' ? C.success : r.status === 'Low Stock' ? C.warning : C.danger} /> },
-            {
-              label: 'Action', center: true, render: r => (
-                <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
-                  <Btn small onClick={() => openEdit(r)}>Edit</Btn>
-                  <DangerBtn small onClick={() => handleDelete(r._id)}>Delete</DangerBtn>
-                </div>
-              )
-            },
-          ]} />
-        </LoadState>
-      </Card>
+      {tab === 'items' && (
+        <>
+          <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search item name..." style={{ flex: 1, padding: '10px 14px', borderRadius: 8, border: `1px solid ${C.border}` }} />
+            <select value={catFilt} onChange={e => setCatFilt(e.target.value)} style={{ width: 180, padding: '10px 14px', borderRadius: 8, border: `1px solid ${C.border}` }}>
+              <option value="">All Categories</option>
+              {categories.map(c => <option key={c._id} value={c.name}>{c.name}</option>)}
+            </select>
+          </div>
+          <Card>
+            <LoadState loading={invLoading || catLoading} empty={!filteredItems.length}>
+              <Table keyFn={r => r._id} rows={filteredItems} cols={[
+                { label: 'Item ID', render: r => <span style={{ fontWeight: 700, color: C.accent }}>{r.itemId}</span> },
+                { label: 'Item Name', key: 'name' },
+                { label: 'Category', render: r => <span style={{ fontWeight: 600, color: C.text }}>{r.category}</span> },
+                { label: 'Total Qty', center: true, render: r => <span style={{ fontWeight: 800 }}>{r.quantity}</span> },
+                { label: 'Good ✅', center: true, render: r => <Badge label={r.good} color={C.success} /> },
+                { label: 'In Use 📌', center: true, render: r => <Badge label={r.inUse || 0} color={C.accent} /> },
+                { label: 'Bad ❌', center: true, render: r => <Badge label={r.bad} color={C.danger} /> },
+                { label: 'Maint 🔧', center: true, render: r => <Badge label={r.maintenance} color={C.warning} /> },
+                { label: 'Status', center: true, render: r => <Badge label={r.status} color={r.status === 'In Stock' ? C.success : r.status === 'Low Stock' ? C.warning : C.danger} /> },
+                {
+                  label: 'Action', center: true, render: r => (
+                    <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+                      <Btn small onClick={() => {
+                        setEditingData(r);
+                        setForm({
+                          name: r.name, category: r.category, unit: r.unit,
+                          threshold: r.threshold, good: r.good, inUse: r.inUse || 0, bad: r.bad, maintenance: r.maintenance, quantity: r.quantity
+                        });
+                        setModal('edit_item');
+                      }}>Edit</Btn>
+                      <DangerBtn small onClick={() => handleDeleteItem(r._id)}>Del</DangerBtn>
+                    </div>
+                  )
+                },
+              ]} />
+            </LoadState>
+          </Card>
+        </>
+      )}
 
-      <Modal open={!!modal} onClose={() => setModal(null)} title={modal === 'edit' ? 'Edit Inventory Item' : 'Add New Inventory Item'}>
-        <form onSubmit={handleSave}>
-          <FG label="Item Name"><input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required placeholder="e.g. Projector" /></FG>
+      {tab === 'categories' && (
+        <>
+          <Card style={{ marginBottom: 20 }}>
+            <h3 style={{ margin: '0 0 16px', fontSize: 16 }}>Create New Category</h3>
+            <form onSubmit={handleCreateCat} style={{ display: 'flex', gap: 10, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+              <div style={{ flex: 1, minWidth: 200 }}>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.muted, marginBottom: 6 }}>Category Name</label>
+                <input style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: `1px solid ${C.border}` }} value={newCatForm.name} onChange={e => setNewCatForm({ ...newCatForm, name: e.target.value })} required placeholder="e.g. Science Equipment" />
+              </div>
+              <div style={{ flex: 1, minWidth: 200 }}>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.muted, marginBottom: 6 }}>Description</label>
+                <input style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: `1px solid ${C.border}` }} value={newCatForm.description} onChange={e => setNewCatForm({ ...newCatForm, description: e.target.value })} placeholder="Optional description" />
+              </div>
+              <Btn type="submit" style={{ height: 42, padding: '0 24px' }}>+ Create</Btn>
+            </form>
+          </Card>
+
+          <Card>
+            <LoadState loading={catLoading} empty={!categories.length}>
+              <Table keyFn={r => r._id} rows={categories} cols={[
+                { label: 'Category Name', render: r => <span style={{ fontWeight: 700, color: C.accent }}>{r.name}</span> },
+                { label: 'Description', key: 'description' },
+                { label: 'Status', render: r => <Badge label={r.status} color={r.status === 'Active' ? C.success : C.muted} /> },
+                {
+                  label: 'Action', center: true, render: r => (
+                    <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
+                      <Btn small onClick={() => { setEditingData(r); setForm({ name: r.name, description: r.description, status: r.status }); setModal('edit_cat'); }}>Edit</Btn>
+                      <DangerBtn small onClick={() => handleDeleteCat(r._id)}>Delete</DangerBtn>
+                    </div>
+                  )
+                },
+              ]} />
+            </LoadState>
+          </Card>
+        </>
+      )}
+
+      {/* Add Item Modal */}
+      <Modal open={modal === 'add_item'} onClose={() => setModal(null)} title="Add New Item">
+        <form onSubmit={handleSaveItem}>
+          <FG label="Item Name"><input value={form.name || ''} onChange={e => setForm({ ...form, name: e.target.value })} required placeholder="e.g. Projector" /></FG>
           <Row>
             <FG label="Category" half>
-              <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}>
-                {categories.map(c => <option key={c}>{c}</option>)}
+              <select value={form.category || ''} onChange={e => setForm({ ...form, category: e.target.value })} required>
+                {categories.length === 0 && <option value="">No categories defined</option>}
+                {categories.map(c => <option key={c._id} value={c.name}>{c.name}</option>)}
               </select>
             </FG>
-            <FG label="Unit" half><input value={form.unit} onChange={e => setForm({ ...form, unit: e.target.value })} placeholder="pcs/boxes" required /></FG>
+            <FG label="Unit" half><input value={form.unit || ''} onChange={e => setForm({ ...form, unit: e.target.value })} placeholder="pcs/boxes" required /></FG>
           </Row>
-          <FG label="Quantity"><input type="number" value={form.quantity} onChange={e => setForm({ ...form, quantity: +e.target.value })} required min="0" /></FG>
+          <Row>
+            <FG label="Initial Total Items" half><input type="number" value={form.quantity === undefined ? '' : form.quantity} onChange={e => setForm({ ...form, quantity: e.target.value })} required min="0" placeholder="0" /></FG>
+            <FG label="Low Stock Alert Threshold" half><input type="number" value={form.threshold === undefined ? '' : form.threshold} onChange={e => setForm({ ...form, threshold: e.target.value })} required min="0" placeholder="10" /></FG>
+          </Row>
+          <Row>
+            <FG label="Items In Use" half><input type="number" value={form.inUse === undefined ? '' : form.inUse} onChange={e => setForm({ ...form, inUse: e.target.value })} min="0" placeholder="0" /></FG>
+            <FG label="Good Working" half><input type="number" value={form.good === undefined ? '' : form.good} onChange={e => setForm({ ...form, good: e.target.value })} min="0" placeholder="Auto-calculated if blank" /></FG>
+          </Row>
           <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
-            <Btn type="submit">Save to Database</Btn>
+            <Btn type="submit">Save File</Btn>
+            <Btn type="button" onClick={() => setModal(null)} color={C.muted} dim={C.alt}>Cancel</Btn>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Edit Item Modal (Focus on Allocation) */}
+      <Modal open={modal === 'edit_item'} onClose={() => setModal(null)} title={`Edit Condition: ${form.name}`}>
+        <form onSubmit={handleSaveItem}>
+          <div style={{ marginBottom: 16, padding: '12px', background: C.border + '55', borderRadius: 8 }}>
+            <div style={{ fontWeight: 600, marginBottom: 8 }}>Allocate Condition Numbers</div>
+            <div style={{ fontSize: 13, color: C.muted }}>Total items remains fixed unless changed manually.</div>
+          </div>
+
+          <Row>
+            <FG label="Total Items (Fixed)" half><input type="number" value={form.quantity === undefined ? '' : form.quantity} onChange={e => setForm({ ...form, quantity: e.target.value })} required min="0" /></FG>
+            <FG label="Low Stock Threshold" half><input type="number" value={form.threshold === undefined ? '' : form.threshold} onChange={e => setForm({ ...form, threshold: e.target.value })} required min="0" /></FG>
+          </Row>
+          <Row>
+            <FG label="Good Working" half><input type="number" value={form.good === undefined ? '' : form.good} onChange={e => setForm({ ...form, good: e.target.value })} required min="0" /></FG>
+            <FG label="Items In Use" half><input type="number" value={form.inUse === undefined ? '' : form.inUse} onChange={e => setForm({ ...form, inUse: e.target.value })} required min="0" /></FG>
+          </Row>
+          <Row>
+            <FG label="Bad / Damaged" half><input type="number" value={form.bad === undefined ? '' : form.bad} onChange={e => setForm({ ...form, bad: e.target.value })} required min="0" /></FG>
+            <FG label="Needs Maintenance" half><input type="number" value={form.maintenance === undefined ? '' : form.maintenance} onChange={e => setForm({ ...form, maintenance: e.target.value })} required min="0" /></FG>
+          </Row>
+
+          <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
+            <Btn type="submit" color={C.accent}>Update Condition</Btn>
+            <Btn type="button" onClick={() => setModal(null)} color={C.muted} dim={C.alt}>Cancel</Btn>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Edit Category Modal */}
+      <Modal open={modal === 'edit_cat'} onClose={() => setModal(null)} title="Edit Category">
+        <form onSubmit={handleSaveCat}>
+          <FG label="Category Name"><input value={form.name || ''} onChange={e => setForm({ ...form, name: e.target.value })} required placeholder="e.g. Science Equipment" /></FG>
+          <FG label="Description"><input value={form.description || ''} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Optional description" /></FG>
+          <FG label="Status">
+            <select value={form.status || 'Active'} onChange={e => setForm({ ...form, status: e.target.value })}>
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+            </select>
+          </FG>
+          <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
+            <Btn type="submit">Save Category</Btn>
             <Btn type="button" onClick={() => setModal(null)} color={C.muted} dim={C.alt}>Cancel</Btn>
           </div>
         </form>
@@ -4203,12 +4292,12 @@ export function SubjectsPage() {
   // Search filter
   // Search filter (Safe version)
   const filteredSubjects = subjects.filter(s => {
-      const safeName = s.name || '';
-      const safeCode = s.code || '';
-      const safeSearch = search || '';
-      
-      return safeName.toLowerCase().includes(safeSearch.toLowerCase()) || 
-             safeCode.toLowerCase().includes(safeSearch.toLowerCase());
+    const safeName = s.name || '';
+    const safeCode = s.code || '';
+    const safeSearch = search || '';
+
+    return safeName.toLowerCase().includes(safeSearch.toLowerCase()) ||
+      safeCode.toLowerCase().includes(safeSearch.toLowerCase());
   });
 
   const handleSave = async (e) => {
@@ -4221,7 +4310,7 @@ export function SubjectsPage() {
       show('Subject Added Successfully!');
       setModal(false);
       setForm({ name: '', code: '', type: 'Theory' });
-      reload(); 
+      reload();
     } else {
       show(r.message || "Failed to add subject", false);
     }
@@ -4244,18 +4333,18 @@ export function SubjectsPage() {
   return (
     <PageWrap>
       <Toast />
-      <PageHeader 
-        title="Subject Management" 
+      <PageHeader
+        title="Subject Management"
         subtitle="Create and manage academic subjects"
         action={<Btn onClick={() => setModal(true)}>+ Add Subject</Btn>}
       />
 
       <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
-        <input 
-            value={search} 
-            onChange={e => setSearch(e.target.value)} 
-            placeholder="Search by subject name or code..." 
-            style={{ maxWidth: '400px' }} 
+        <input
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Search by subject name or code..."
+          style={{ maxWidth: '400px' }}
         />
       </div>
 
@@ -4279,11 +4368,11 @@ export function SubjectsPage() {
       <Modal open={modal} onClose={() => setModal(false)} title="Add New Subject">
         <form onSubmit={handleSave}>
           <FG label="Subject Name">
-              <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required placeholder="e.g. Advanced Mathematics" />
+            <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required placeholder="e.g. Advanced Mathematics" />
           </FG>
           <Row>
             <FG label="Subject Code" half>
-                <input value={form.code} onChange={e => setForm({ ...form, code: e.target.value.toUpperCase() })} required placeholder="e.g. MTH-101" />
+              <input value={form.code} onChange={e => setForm({ ...form, code: e.target.value.toUpperCase() })} required placeholder="e.g. MTH-101" />
             </FG>
             <FG label="Type" half>
               <select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })}>
@@ -4294,7 +4383,7 @@ export function SubjectsPage() {
               </select>
             </FG>
           </Row>
-          
+
           <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
             <Btn type="submit" disabled={saving}>{saving ? 'Saving...' : 'Save Subject'}</Btn>
             <Btn type="button" onClick={() => setModal(false)} color={C.muted} dim={C.alt}>Cancel</Btn>
@@ -4326,15 +4415,15 @@ export function MarksEntryPage() {
   // 1. Fetch Subjects list
   const { data: subjectData } = useFetch('/subjects');
   const subjectsList = Array.isArray(subjectData) ? subjectData : (subjectData?.data || []);
-  
+
   // 2. Fetch Students for the selected class
   const { data: studentData, loading: studentsLoading } = useFetch(config.standard ? `/students?standard=${config.standard}` : null);
   const students = Array.isArray(studentData) ? studentData : (studentData?.students || studentData?.data || []);
 
   // 3. Auto-fetch existing marks if they exist
   const { data: existingMarksSheet, reload: checkExisting } = useFetch(
-    (config.examTitle && config.standard && config.subject) 
-      ? `/marks?examTitle=${config.examTitle}&standard=${config.standard}&subject=${config.subject}` 
+    (config.examTitle && config.standard && config.subject)
+      ? `/marks?examTitle=${config.examTitle}&standard=${config.standard}&subject=${config.subject}`
       : null
   );
 
@@ -4356,7 +4445,7 @@ export function MarksEntryPage() {
     if (isNaN(val)) val = '';
     if (val > config.maxMarks) val = config.maxMarks;
     if (val < 0) val = 0;
-    
+
     setMarksData(prev => ({ ...prev, [studentId]: val }));
   };
 
@@ -4371,12 +4460,12 @@ export function MarksEntryPage() {
       studentName: stu.name,
       rollNo: stu.rollNo,
       marksObtained: marksData[stu._id] || 0,
-      isAbsent: marksData[stu._id] === 'A' || marksData[stu._id] === '' 
+      isAbsent: marksData[stu._id] === 'A' || marksData[stu._id] === ''
     }));
 
     const payload = { ...config, records: recordsToSave };
     const r = await call(token, 'POST', '/marks', payload);
-    
+
     if (r.success) {
       show('Marks saved successfully!');
       checkExisting();
@@ -4396,29 +4485,29 @@ export function MarksEntryPage() {
         <div style={{ fontSize: 16, fontWeight: 800, color: C.text, marginBottom: 16 }}>1. Assessment Setup</div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           <FG label="Type" half={false}>
-            <select value={config.examType} onChange={e => setConfig({...config, examType: e.target.value})}>
+            <select value={config.examType} onChange={e => setConfig({ ...config, examType: e.target.value })}>
               <option value="Formative">Formative (FA)</option>
               <option value="Summative">Summative (SA)</option>
               <option value="Unit Test">Unit Test</option>
             </select>
           </FG>
           <FG label="Exam Title" half={false}>
-            <input value={config.examTitle} onChange={e => setConfig({...config, examTitle: e.target.value})} placeholder="e.g. FA-1" />
+            <input value={config.examTitle} onChange={e => setConfig({ ...config, examTitle: e.target.value })} placeholder="e.g. FA-1" />
           </FG>
           <FG label="Class" half={false}>
-            <select value={config.standard} onChange={e => setConfig({...config, standard: e.target.value})}>
+            <select value={config.standard} onChange={e => setConfig({ ...config, standard: e.target.value })}>
               <option value="">-- Class --</option>
-              {['1','2','3','4','5','6','7','8','9','10'].map(s => <option key={s} value={s}>Class {s}</option>)}
+              {['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'].map(s => <option key={s} value={s}>Class {s}</option>)}
             </select>
           </FG>
           <FG label="Subject" half={false}>
-            <select value={config.subject} onChange={e => setConfig({...config, subject: e.target.value})}>
+            <select value={config.subject} onChange={e => setConfig({ ...config, subject: e.target.value })}>
               <option value="">-- Subject --</option>
               {subjectsList.map(s => <option key={s._id} value={s.name}>{s.name}</option>)}
             </select>
           </FG>
           <FG label="Max Marks" half={false}>
-            <input type="number" value={config.maxMarks} onChange={e => setConfig({...config, maxMarks: parseInt(e.target.value) || 0})} />
+            <input type="number" value={config.maxMarks} onChange={e => setConfig({ ...config, maxMarks: parseInt(e.target.value) || 0 })} />
           </FG>
         </div>
       </Card>
@@ -4449,21 +4538,21 @@ export function MarksEntryPage() {
                   {students.map((stu) => (
                     <tr key={stu._id} style={{ borderBottom: `1px solid ${C.alt}` }}>
                       <td style={{ padding: '12px', fontWeight: 600, color: C.muted }}>{stu.rollNo || 'N/A'}</td>
-                      
+
                       {/* NEW LOGIN ID COLUMN */}
                       <td style={{ padding: '12px', fontWeight: 600, color: C.purple }}>{stu.email || stu.username || 'N/A'}</td>
-                      
+
                       <td style={{ padding: '12px', fontWeight: 700, color: C.text }}>{stu.name}</td>
                       <td style={{ padding: '12px', textAlign: 'right' }}>
-                        <input 
+                        <input
                           type="number"
                           value={marksData[stu._id] !== undefined ? marksData[stu._id] : ''}
                           onChange={(e) => handleMarkChange(stu._id, e.target.value)}
                           placeholder="0"
-                          style={{ 
+                          style={{
                             width: '90px', textAlign: 'center', fontWeight: 800, color: C.accent, fontSize: '16px',
                             background: marksData[stu._id] !== undefined ? C.accentDim : C.surface
-                          }} 
+                          }}
                         />
                       </td>
                     </tr>
@@ -4525,7 +4614,7 @@ export function MarksEntryPage() {
 //           <div style={{ fontSize: 28, fontWeight: 800, color: C.text, marginTop: 8 }}>Class 10</div>
 //           <div style={{ fontSize: 14, color: C.success, fontWeight: 600, marginTop: 4 }}>↑ 88.3% Average</div>
 //         </Card>
-        
+
 //         <Card style={{ borderTop: `4px solid ${C.warning}` }}>
 //           <div style={{ fontSize: 13, color: C.muted, fontWeight: 700, textTransform: 'uppercase' }}>Needs Attention</div>
 //           <div style={{ fontSize: 28, fontWeight: 800, color: C.text, marginTop: 8 }}>Class 9</div>
@@ -4545,7 +4634,7 @@ export function MarksEntryPage() {
 //           <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: C.text }}>Subject Performance by Class</h3>
 //           <p style={{ margin: 0, fontSize: 14, color: C.muted }}>Comparing average marks out of 100</p>
 //         </div>
-        
+
 //         <div style={{ width: '100%', height: 400 }}>
 //           <ResponsiveContainer>
 //             <BarChart data={performanceData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
@@ -4557,7 +4646,7 @@ export function MarksEntryPage() {
 //                 contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', fontWeight: 600 }}
 //               />
 //               <Legend wrapperStyle={{ paddingTop: 20, fontWeight: 600 }} />
-              
+
 //               {/* Vibrant Colors for the bars */}
 //               <Bar dataKey="Mathematics" fill="#3b82f6" radius={[6, 6, 0, 0]} />
 //               <Bar dataKey="Science" fill="#10b981" radius={[6, 6, 0, 0]} />
@@ -4584,7 +4673,7 @@ export function MarksEntryPage() {
 //                 contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', fontWeight: 600 }}
 //               />
 //               <Legend wrapperStyle={{ paddingTop: 20, fontWeight: 600 }} />
-              
+
 //               <Line type="monotone" dataKey="attendance" name="Attendance %" stroke="#f59e0b" strokeWidth={4} dot={{ r: 6 }} activeDot={{ r: 8 }} />
 //               <Line type="monotone" dataKey="avgScore" name="Avg Score %" stroke="#ec4899" strokeWidth={4} dot={{ r: 6 }} activeDot={{ r: 8 }} />
 //             </LineChart>

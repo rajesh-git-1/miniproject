@@ -25,7 +25,7 @@ router.get('/dashboard/stats', async (req, res) => {
 
     // Fetch data relevant to THIS specific student
     const [myAttendance, myResults, myFees, upcomingExamsCount] = await Promise.all([
-      Attendance.find({ student: studentId }),
+      Attendance.find({ student: studentId }).sort({ date: -1 }),
       Result.find({ student: studentId }).sort({ createdAt: -1 }).limit(1), // Get latest result
       Fee.find({ student: studentId, status: { $ne: 'Paid' } }), // Get unpaid fees
       Exam.countDocuments({ date: { $gte: new Date() } }) // Upcoming exams (can filter by classId if needed)
@@ -45,11 +45,14 @@ router.get('/dashboard/stats', async (req, res) => {
     res.json({
       success: true,
       data: {
-        attendancePct: attendancePct || 87, // Fallback for UI if DB empty
-        latestResult: latestGrade || "A",
-        upcomingExams: upcomingExamsCount || 3,
-        pendingHW: 2, // Mocked homework count
-        feeDue: totalFeeDue
+        attendancePct: attendancePct, 
+        totalDays: totalDays,
+        presentDays: presentDays,
+        latestResult: latestGrade,
+        upcomingExams: upcomingExamsCount || 0,
+        pendingHW: 0, 
+        feeDue: totalFeeDue,
+        attendanceHistory: myAttendance
       }
     });
   } catch (error) {
