@@ -13,6 +13,9 @@ import {
   PendingRegistration,CentralAuth
 } from '../models/index.js';
 import { sendAbsentNotification } from '../utils/whatsapp.js';
+import ExcelJS from 'exceljs';
+import PDFDocument from 'pdfkit';
+
 
 const router = express.Router();
 
@@ -707,6 +710,102 @@ router.get('/attendance/summary/:classId', auth, async (req, res) => {
     ok(res, agg);
   } catch (e) { err(res, e.message); }
 });
+
+router.post('/attendance/report/dynamic', auth, async (req, res) => {
+  try {
+    const { from, to, classId, status, columns, format } = req.body;
+    
+    let q = {};
+    if (from && to) {
+      q.date = { 
+        $gte: new Date(new Date(from).setHours(0,0,0,0)), 
+        $lte: new Date(new Date(to).setHours(23,59,59,999)) 
+      };
+    }
+    if (classId) q.classId = classId;
+    if (status && status !== 'All') q.status = status;
+
+    const att = await Attendance.find(q)
+      .populate('student', 'name rollNo standard section')
+      .populate('classId', 'name')
+      .populate('markedBy', 'name')
+      .sort({ date: 1 });
+
+    const data = att.map(a => {
+      let row = {};
+      if (columns.includes('Date')) row['Date'] = new Date(a.date).toLocaleDateString('en-IN');
+      if (columns.includes('Student Name')) row['Student Name'] = a.student?.name || 'N/A';
+      if (columns.includes('Roll Number')) row['Roll Number'] = a.student?.rollNo || 'N/A';
+      if (columns.includes('Class')) row['Class'] = a.classId?.name || 'N/A';
+      if (columns.includes('Status')) row['Status'] = a.status;
+      if (columns.includes('Remarks')) row['Remarks'] = a.remarks || '';
+      if (columns.includes('Marked By')) row['Marked By'] = a.markedBy?.name || 'N/A';
+      return row;
+    });
+
+    if (format === 'excel') {
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Attendance Report');
+      
+      worksheet.columns = columns.map(col => ({ header: col, key: col, width: col === 'Remarks' ? 30 : 20 }));
+      
+      worksheet.addRows(data);
+      
+      worksheet.getRow(1).eachCell((cell) => {
+        cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2563EB' } }; // Blue header
+      });
+
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', 'attachment; filename=Attendance_Report.xlsx');
+      await workbook.xlsx.write(res);
+      return res.end();
+    } else if (format === 'pdf') {
+      const doc = new PDFDocument({ margin: 30, size: 'A4' });
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', 'attachment; filename=Attendance_Report.pdf');
+      doc.pipe(res);
+
+      doc.fontSize(20).font('Helvetica-Bold').text('Attendance Report', { align: 'center' });
+      doc.fontSize(10).font('Helvetica').text(`Period: ${from} to ${to}`, { align: 'center' });
+      doc.text(`Generated on: ${new Date().toLocaleString()}`, { align: 'center' });
+      doc.moveDown(2);
+
+      // PDF Table logic
+      const tableTop = 160;
+      const pageWidth = 535;
+      const columnWidth = pageWidth / columns.length;
+      
+      // Draw Header
+      doc.fontSize(10).font('Helvetica-Bold');
+      doc.rect(30, tableTop - 5, pageWidth, 20).fill('#f3f4f6').stroke('#f3f4f6');
+      doc.fillColor('#000000');
+      
+      columns.forEach((col, i) => {
+        doc.text(col, 35 + (i * columnWidth), tableTop);
+      });
+      
+      doc.moveTo(30, tableTop + 15).lineTo(30 + pageWidth, tableTop + 15).stroke('#e5e7eb');
+      
+      let y = tableTop + 25;
+      doc.font('Helvetica').fontSize(9);
+      
+      data.forEach((row) => {
+        if (y > 750) { doc.addPage(); y = 50; }
+        columns.forEach((col, i) => {
+          doc.text(String(row[col] || ''), 35 + (i * columnWidth), y, { width: columnWidth - 5 });
+        });
+        y += 20;
+        doc.moveTo(30, y - 5).lineTo(30 + pageWidth, y - 5).stroke('#f9fafb');
+      });
+
+      doc.end();
+    } else {
+      ok(res, data);
+    }
+  } catch (e) { err(res, e.message); }
+});
+
 
 // Mark attendance (bulk) + WhatsApp notifications for absent students
 router.post('/attendance', auth, async (req, res) => {

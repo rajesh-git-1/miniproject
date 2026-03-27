@@ -753,7 +753,318 @@ export function HousesCreatePage() {
 }
 
 
+
+function AttendanceReportModal({ open, onClose, token, classes }) {
+  const [filter, setFilter] = useState({
+    from: new Date().toISOString().split('T')[0],
+    to: new Date().toISOString().split('T')[0],
+    classId: '',
+    status: 'All',
+    format: 'excel',
+    columns: ['Date', 'Student Name', 'Roll Number', 'Class', 'Status']
+  });
+  const [loading, setLoading] = useState(false);
+
+  const availableColumns = ['Date', 'Student Name', 'Roll Number', 'Class', 'Status', 'Marked By', 'Remarks'];
+
+  const toggleColumn = (col) => {
+    setFilter(f => ({
+      ...f,
+      columns: f.columns.includes(col) 
+        ? f.columns.filter(c => c !== col) 
+        : [...f.columns, col]
+    }));
+  };
+
+  const download = async () => {
+    if (filter.columns.length === 0) return alert('Select at least one column');
+    setLoading(true);
+    try {
+      const response = await fetch(`${BASE}/attendance/report/dynamic`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(filter)
+      });
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Attendance_Report_${filter.from}_to_${filter.to}.${filter.format === 'excel' ? 'xlsx' : 'pdf'}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } catch (e) {
+      console.error(e);
+      alert('Failed to generate report');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Modal open={open} onClose={onClose} title="Generate Attendance Report">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <Row>
+          <FG label="From Date" half><input type="date" value={filter.from} onChange={e => setFilter(f => ({ ...f, from: e.target.value }))} style={{ width: '100%' }} /></FG>
+          <FG label="To Date" half><input type="date" value={filter.to} onChange={e => setFilter(f => ({ ...f, to: e.target.value }))} style={{ width: '100%' }} /></FG>
+        </Row>
+        
+        <Row>
+          <FG label="Filter Class" half>
+            <select value={filter.classId} onChange={e => setFilter(f => ({ ...f, classId: e.target.value }))} style={{ width: '100%' }}>
+              <option value="">All Classes</option>
+              {(classes || []).map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
+            </select>
+          </FG>
+          <FG label="Status" half>
+            <select value={filter.status} onChange={e => setFilter(f => ({ ...f, status: e.target.value }))} style={{ width: '100%' }}>
+              <option value="All">All Statuses</option>
+              <option value="Present">Present Only</option>
+              <option value="Absent">Absent Only</option>
+              <option value="Late">Late Only</option>
+            </select>
+          </FG>
+        </Row>
+
+        <FG label="Select Columns to Include">
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', 
+            gap: 10, 
+            background: C.alt, 
+            padding: '16px', 
+            borderRadius: 12, 
+            border: `1px solid ${C.border}` 
+          }}>
+            {availableColumns.map(col => {
+              const isSelected = filter.columns.includes(col);
+              return (
+                <label key={col} style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 10, 
+                  cursor: 'pointer', 
+                  padding: '8px 12px',
+                  borderRadius: 8,
+                  background: isSelected ? C.surface : 'transparent',
+                  border: `1px solid ${isSelected ? C.accent + '44' : 'transparent'}`,
+                  boxShadow: isSelected ? '0 2px 8px rgba(0,0,0,0.05)' : 'none',
+                  transition: 'all 0.2s',
+                  userSelect: 'none'
+                }}>
+                  <div style={{
+                    width: 20,
+                    height: 20,
+                    borderRadius: 6,
+                    border: `2px solid ${isSelected ? C.accent : C.faint}`,
+                    background: isSelected ? C.accent : 'transparent',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'all 0.2s',
+                    flexShrink: 0
+                  }}>
+                    {isSelected && <span style={{ color: '#fff', fontSize: 11, fontWeight: 900 }}>✓</span>}
+                  </div>
+                  <input 
+                    type="checkbox" 
+                    checked={isSelected} 
+                    onChange={() => toggleColumn(col)} 
+                    style={{ display: 'none' }}
+                  />
+                  <span style={{ 
+                    fontSize: 12, 
+                    fontWeight: isSelected ? 700 : 500, 
+                    color: isSelected ? C.text : C.muted,
+                    whiteSpace: 'nowrap'
+                  }}>{col}</span>
+                </label>
+              );
+            })}
+          </div>
+        </FG>
+
+        <FG label="Report Format">
+          <div style={{ display: 'flex', gap: 12 }}>
+            <button 
+              onClick={() => setFilter(f => ({ ...f, format: 'excel' }))}
+              style={{ flex: 1, padding: '12px', borderRadius: 8, border: `2px solid ${filter.format === 'excel' ? C.accent : C.border}`, background: filter.format === 'excel' ? C.accentDim : C.surface, color: filter.format === 'excel' ? C.accent : C.text, fontWeight: 700, cursor: 'pointer', transition: 'all .25s' }}
+            >
+              📊 Excel (.xlsx)
+            </button>
+            <button 
+              onClick={() => setFilter(f => ({ ...f, format: 'pdf' }))}
+              style={{ flex: 1, padding: '12px', borderRadius: 8, border: `2px solid ${filter.format === 'pdf' ? C.danger : C.border}`, background: filter.format === 'pdf' ? C.dangerDim : C.surface, color: filter.format === 'pdf' ? C.danger : C.text, fontWeight: 700, cursor: 'pointer', transition: 'all .25s' }}
+            >
+              📄 PDF (.pdf)
+            </button>
+          </div>
+        </FG>
+
+        <div style={{ display: 'flex', gap: 10, marginTop: 10 }}>
+          <Btn onClick={download} disabled={loading} style={{ flex: 1, padding: '14px' }}>
+            {loading ? 'Generating...' : '🚀 Download Report'}
+          </Btn>
+          <Btn onClick={onClose} color={C.muted} dim={C.alt}>Close</Btn>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+
+function FeeReportModal({ open, onClose, token }) {
+  const [filter, setFilter] = useState({
+    from: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
+    to: new Date().toISOString().split('T')[0],
+    format: 'excel',
+    columns: ['Date', 'Student Name', 'Roll Number', 'Class', 'Fee Type', 'Amount Paid', 'Method']
+  });
+  const [loading, setLoading] = useState(false);
+  const availableColumns = ['Date', 'Student Name', 'Roll Number', 'Class', 'Fee Type', 'Amount Paid', 'Discount', 'Fine', 'Method', 'Remarks'];
+
+  const toggleColumn = (col) => {
+    setFilter(f => ({ ...f, columns: f.columns.includes(col) ? f.columns.filter(c => c !== col) : [...f.columns, col] }));
+  };
+
+  const download = async () => {
+    if (filter.columns.length === 0) return alert('Select at least one column');
+    setLoading(true);
+    try {
+      const resp = await fetch(`${BASE}/fees/report/dynamic`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(filter)
+      });
+      const blob = await resp.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Fee_Report_${filter.from}_to_${filter.to}.${filter.format === 'excel' ? 'xlsx' : 'pdf'}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } catch (e) { alert('Error generating report'); }
+    finally { setLoading(false); }
+  };
+
+  return (
+    <Modal open={open} onClose={onClose} title="Generate Fee Collection Report">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <Row>
+          <FG label="From Date" half><input type="date" value={filter.from} onChange={e => setFilter(f => ({ ...f, from: e.target.value }))} style={{ width: '100%' }} /></FG>
+          <FG label="To Date" half><input type="date" value={filter.to} onChange={e => setFilter(f => ({ ...f, to: e.target.value }))} style={{ width: '100%' }} /></FG>
+        </Row>
+        
+        <FG label="Select Columns to Include">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 10, background: C.alt, padding: '16px', borderRadius: 12, border: `1px solid ${C.border}` }}>
+            {availableColumns.map(col => {
+              const isSelected = filter.columns.includes(col);
+              return (
+                <label key={col} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', padding: '8px 12px', borderRadius: 8, background: isSelected ? C.surface : 'transparent', border: `1px solid ${isSelected ? C.success + '44' : 'transparent'}`, transition: '0.2s', userSelect: 'none' }}>
+                  <div style={{ width: 18, height: 18, borderRadius: 5, border: `2px solid ${isSelected ? C.success : C.faint}`, background: isSelected ? C.success : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {isSelected && <span style={{ color: '#fff', fontSize: 10, fontWeight: 900 }}>✓</span>}
+                  </div>
+                  <input type="checkbox" checked={isSelected} onChange={() => toggleColumn(col)} style={{ display: 'none' }} />
+                  <span style={{ fontSize: 12, fontWeight: isSelected ? 700 : 500, color: isSelected ? C.text : C.muted }}>{col}</span>
+                </label>
+              );
+            })}
+          </div>
+        </FG>
+
+        <FG label="Report Format">
+          <div style={{ display: 'flex', gap: 12 }}>
+            <button onClick={() => setFilter(f => ({ ...f, format: 'excel' }))} style={{ flex: 1, padding: '12px', borderRadius: 8, border: `2px solid ${filter.format === 'excel' ? C.success : C.border}`, background: filter.format === 'excel' ? C.successDim : C.surface, color: filter.format === 'excel' ? C.success : C.text, fontWeight: 700, cursor: 'pointer' }}>📊 Excel (.xlsx)</button>
+            <button onClick={() => setFilter(f => ({ ...f, format: 'pdf' }))} style={{ flex: 1, padding: '12px', borderRadius: 8, border: `2px solid ${filter.format === 'pdf' ? C.danger : C.border}`, background: filter.format === 'pdf' ? C.dangerDim : C.surface, color: filter.format === 'pdf' ? C.danger : C.text, fontWeight: 700, cursor: 'pointer' }}>📄 PDF (.pdf)</button>
+          </div>
+        </FG>
+
+        <Btn onClick={download} disabled={loading} style={{ padding: '14px' }}>{loading ? 'Generating...' : '🚀 Download Collection Report'}</Btn>
+      </div>
+    </Modal>
+  );
+}
+
+function InventoryReportModal({ open, onClose, token, categories }) {
+  const [filter, setFilter] = useState({
+    category: 'All',
+    format: 'excel',
+    columns: ['Item ID', 'Item Name', 'Category', 'Total Qty', 'Good Condition', 'Status']
+  });
+  const [loading, setLoading] = useState(false);
+  const availableColumns = ['Item ID', 'Item Name', 'Category', 'Total Qty', 'Good Condition', 'In Use', 'Bad Condition', 'Maintenance', 'Status'];
+
+  const toggleColumn = (col) => {
+    setFilter(f => ({ ...f, columns: f.columns.includes(col) ? f.columns.filter(c => c !== col) : [...f.columns, col] }));
+  };
+
+  const download = async () => {
+    if (filter.columns.length === 0) return alert('Select at least one column');
+    setLoading(true);
+    try {
+      const resp = await fetch(`${BASE}/inventory/report/dynamic`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(filter)
+      });
+      const blob = await resp.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Inventory_Report_${filter.category}.${filter.format === 'excel' ? 'xlsx' : 'pdf'}`;
+      a.click();
+    } catch (e) { alert('Error generating report'); }
+    finally { setLoading(false); }
+  };
+
+  return (
+    <Modal open={open} onClose={onClose} title="Generate Inventory Status Report">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <FG label="Filter Category">
+          <select value={filter.category} onChange={e => setFilter(f => ({ ...f, category: e.target.value }))} style={{ width: '100%' }}>
+            <option value="All">All Categories</option>
+            {(categories || []).map(c => <option key={c._id} value={c.name}>{c.name}</option>)}
+          </select>
+        </FG>
+
+        <FG label="Select Columns to Include">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 10, background: C.alt, padding: '16px', borderRadius: 12, border: `1px solid ${C.border}` }}>
+            {availableColumns.map(col => {
+              const isSelected = filter.columns.includes(col);
+              return (
+                <label key={col} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', padding: '8px 12px', borderRadius: 8, background: isSelected ? C.surface : 'transparent', border: `1px solid ${isSelected ? C.purple + '44' : 'transparent'}`, transition: '0.2s', userSelect: 'none' }}>
+                  <div style={{ width: 18, height: 18, borderRadius: 5, border: `2px solid ${isSelected ? C.purple : C.faint}`, background: isSelected ? C.purple : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {isSelected && <span style={{ color: '#fff', fontSize: 10, fontWeight: 900 }}>✓</span>}
+                  </div>
+                  <input type="checkbox" checked={isSelected} onChange={() => toggleColumn(col)} style={{ display: 'none' }} />
+                  <span style={{ fontSize: 12, fontWeight: isSelected ? 700 : 500, color: isSelected ? C.text : C.muted }}>{col}</span>
+                </label>
+              );
+            })}
+          </div>
+        </FG>
+
+        <FG label="Report Format">
+          <div style={{ display: 'flex', gap: 12 }}>
+            <button onClick={() => setFilter(f => ({ ...f, format: 'excel' }))} style={{ flex: 1, padding: '12px', borderRadius: 8, border: `2px solid ${filter.format === 'excel' ? C.purple : C.border}`, background: filter.format === 'excel' ? '#f5f3ff' : C.surface, color: filter.format === 'excel' ? C.purple : C.text, fontWeight: 700, cursor: 'pointer' }}>📊 Excel (.xlsx)</button>
+            <button onClick={() => setFilter(f => ({ ...f, format: 'pdf' }))} style={{ flex: 1, padding: '12px', borderRadius: 8, border: `2px solid ${filter.format === 'pdf' ? C.danger : C.border}`, background: filter.format === 'pdf' ? C.dangerDim : C.surface, color: filter.format === 'pdf' ? C.danger : C.text, fontWeight: 700, cursor: 'pointer' }}>📄 PDF (.pdf)</button>
+          </div>
+        </FG>
+
+        <Btn onClick={download} disabled={loading} style={{ padding: '14px', background: C.purple, border: `1px solid ${C.purple}` }}>{loading ? 'Generating...' : '🚀 Download Inventory Report'}</Btn>
+      </div>
+    </Modal>
+  );
+}
+
 export function AttendancePage() {
+
+
   const token = useToken();
   // const { data: classes } = useFetch('/classes');
   const { data: classes, loading: classesLoading } = useFetch('/classes');
@@ -768,6 +1079,8 @@ export function AttendancePage() {
   const { data: classStats } = useFetch(classId ? `/attendance/trend?classId=${classId}&date=${date}` : null);
 
   const { show, Toast } = useToast();
+  const [reportModal, setReportModal] = useState(false);
+
 
   const [selectedStudent, setSelectedStudent] = useState(null);
 
@@ -859,8 +1172,16 @@ export function AttendancePage() {
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
           <SuccessBtn small onClick={() => markAll('Present')}>Set All Present</SuccessBtn>
           <DangerBtn small onClick={() => markAll('Absent')}>Set All Absent</DangerBtn>
+          <Btn small onClick={() => setReportModal(true)} style={{ background: 'linear-gradient(45deg, #FF6B6B, #FF8E53)', color: '#fff', border: 'none' }}>📊 Attendance Reports</Btn>
         </div>
       </div>
+
+      <AttendanceReportModal
+        open={reportModal}
+        onClose={() => setReportModal(false)}
+        token={token}
+        classes={classes}
+      />
 
       {classId && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -1434,6 +1755,8 @@ export function FeesPage() {
   const token = useToken();
   const { show, Toast } = useToast();
   const [activeTab, setActiveTab] = useState('collection'); // 'setup' or 'collection'
+  const [reportModal, setReportModal] = useState(false);
+
 
   // --- SETUP TAB STATE ---
   const [setupForm, setSetupForm] = useState({ standard: '', feeType: '', amount: '', dueDate: '' });
@@ -1503,7 +1826,13 @@ export function FeesPage() {
   return (
     <PageWrap>
       <Toast />
-      <PageHeader title="Fee Management" subtitle="Manage fee structures and record student payments" />
+      <PageHeader title="Fee Management" subtitle="Manage fee structures and record student payments" 
+        action={
+          <Btn onClick={() => setReportModal(true)} style={{ background: C.success, border: `1px solid ${C.success}` }}>📊 Generate Report</Btn>
+        }
+      />
+
+      <FeeReportModal open={reportModal} onClose={() => setReportModal(false)} token={token} />
 
       {/* TABS */}
       <div style={{ display: 'flex', gap: 10, marginBottom: 20, borderBottom: `2px solid ${C.border}`, paddingBottom: 10 }}>
@@ -4020,6 +4349,8 @@ export function InventoryPage() {
   const [modal, setModal] = useState(null); // 'add_item', 'edit_item', 'edit_cat'
   const [editingData, setEditingData] = useState(null);
   const { show, Toast } = useToast();
+  const [reportModal, setReportModal] = useState(false);
+
 
   const { data: invData, loading: invLoading, reload: reloadInv } = useFetch('/inventory');
   const { data: catData, loading: catLoading, reload: reloadCat } = useFetch('/inventory/categories');
@@ -4096,14 +4427,20 @@ export function InventoryPage() {
       <Toast />
       <PageHeader title="Inventory Tracker" subtitle="Manage Items & Categories"
         action={
-          tab === 'items' && (
-            <Btn onClick={() => {
-              setForm({ name: '', category: categories.length > 0 ? categories[0].name : '', quantity: 0, unit: 'pcs', threshold: 10 });
-              setModal('add_item');
-            }}>+ Add Item</Btn>
-          )
+          <div style={{ display: 'flex', gap: 10 }}>
+            <Btn onClick={() => setReportModal(true)} style={{ background: C.purple, border: `1px solid ${C.purple}` }}>📊 Inventory Report</Btn>
+            {tab === 'items' && (
+              <Btn onClick={() => {
+                setForm({ name: '', category: categories.length > 0 ? categories[0].name : '', quantity: 0, unit: 'pcs', threshold: 10 });
+                setModal('add_item');
+              }}>+ Add Item</Btn>
+            )}
+          </div>
         }
       />
+
+      <InventoryReportModal open={reportModal} onClose={() => setReportModal(false)} token={token} categories={categories} />
+
 
       {/* Traditional Tabs */}
       <div style={{ display: 'flex', borderBottom: `2px solid ${C.border}`, marginBottom: 20 }}>

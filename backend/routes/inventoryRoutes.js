@@ -2,6 +2,9 @@ import express from 'express';
 import Inventory from '../models/Inventory.js';
 import InventoryCategory from '../models/InventoryCategory.js';
 import auth from '../middleware/authMiddleware.js';
+import ExcelJS from 'exceljs';
+import PDFDocument from 'pdfkit';
+
 
 const router = express.Router();
 
@@ -132,4 +135,70 @@ router.delete('/:id', adminOnly, async (req, res) => {
     }
 });
 
-export default router;
+// --- REPORTING ---
+router.post('/report/dynamic', auth, async (req, res) => {
+    try {
+        const { category, format, columns } = req.body;
+        let q = {};
+        if (category && category !== 'All') q.category = category;
+
+        const items = await Inventory.find(q).sort({ name: 1 });
+
+        const data = items.map(item => {
+            let row = {};
+            if (columns.includes('Item ID')) row['Item ID'] = item.itemId;
+            if (columns.includes('Item Name')) row['Item Name'] = item.name;
+            if (columns.includes('Category')) row['Category'] = item.category;
+            if (columns.includes('Total Qty')) row['Total Qty'] = `${item.quantity} ${item.unit}`;
+            if (columns.includes('Good Condition')) row['Good Condition'] = item.good;
+            if (columns.includes('In Use')) row['In Use'] = item.inUse;
+            if (columns.includes('Bad Condition')) row['Bad Condition'] = item.bad;
+            if (columns.includes('Maintenance')) row['Maintenance'] = item.maintenance;
+            if (columns.includes('Status')) row['Status'] = item.status;
+            return row;
+        });
+
+        if (format === 'excel') {
+            const workbook = new ExcelJS.Workbook();
+            const worksheet = workbook.addWorksheet('Inventory Report');
+            worksheet.columns = columns.map(col => ({ header: col, key: col, width: 20 }));
+            worksheet.addRows(data);
+            worksheet.getRow(1).eachCell(cell => {
+                cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF6366F1' } }; // Indigo
+            });
+            res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            res.setHeader('Content-Disposition', 'attachment; filename=Inventory_Report.xlsx');
+            await workbook.xlsx.write(res);
+            return res.end();
+        } else if (format === 'pdf') {
+            const doc = new PDFDocument({ margin: 30, size: 'A4' });
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', 'attachment; filename=Inventory_Report.pdf');
+            doc.pipe(res);
+            doc.fontSize(20).font('Helvetica-Bold').text('Inventory Status Report', { align: 'center' });
+            doc.fontSize(10).font('Helvetica').text(`Category: ${category || 'All'}`, { align: 'center' });
+            doc.moveDown(2);
+            const tableTop = 160;
+            const pageWidth = 535;
+            const columnWidth = pageWidth / columns.length;
+            doc.fontSize(10).font('Helvetica-Bold').rect(30, tableTop - 5, pageWidth, 20).fill('#eef2ff').stroke('#eef2ff');
+            doc.fillColor('#3730a3');
+            columns.forEach((col, i) => doc.text(col, 35 + (i * columnWidth), tableTop));
+            let y = tableTop + 25;
+            doc.font('Helvetica').fontSize(9).fillColor('#000000');
+            data.forEach(row => {
+                if (y > 750) { doc.addPage(); y = 50; }
+                columns.forEach((col, i) => doc.text(String(row[col] || ''), 35 + (i * columnWidth), y, { width: columnWidth - 5 }));
+                y += 20;
+            });
+            doc.end();
+        } else {
+            res.json({ success: true, data });
+        }
+    } catch (e) {
+        res.status(500).json({ success: false, message: e.message });
+    }
+});
+
+export default router;
