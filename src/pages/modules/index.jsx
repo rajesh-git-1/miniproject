@@ -304,13 +304,28 @@ export function StudentsPage() {
 
   const save = async () => {
     if (!form.name || !form.rollNo || !form.standard) return show('Name, Roll No and Standard are required', false);
+    if (!editing && !photo) return show('Profile photo is mandatory for new students', false);
+    
     setSaving(true);
-    const fd = new FormData();
-    Object.entries(form).forEach(([k, v]) => fd.append(k, v));
-    if (photo) fd.append('profilePhoto', photo);
+    let s3Url = editing?.profilePhotoUrl || '';
 
-    const profilePhotoUrl = photo ? URL.createObjectURL(photo) : (editing?.profilePhotoUrl || '');
-    const payload = { ...form, profilePhotoUrl };
+    if (photo) {
+        const photoData = new FormData();
+        photoData.append('file', photo);
+        const uploadRes = await fetch(`${BASE}/upload`, {
+            method: 'POST',
+            body: photoData
+        });
+        const uploadJson = await uploadRes.json();
+        if (uploadJson.success) {
+            s3Url = uploadJson.url;
+        } else {
+            setSaving(false);
+            return show('Image upload failed', false);
+        }
+    }
+
+    const payload = { ...form, profilePhotoUrl: s3Url };
     const r = await call(token, editing ? 'PUT' : 'POST', editing ? `/students/${editing._id}` : '/students', payload);
     setSaving(false);
     if (r.success) { show(editing ? 'Student updated!' : 'Student added!'); setModal(false); reload(); }
@@ -445,9 +460,29 @@ export function TeachersPage() {
 
   const save = async () => {
     if (!form.name || !form.teacherId) return show('Name and Teacher ID required', false);
+    if (!editing && !photo) return show('Profile photo is mandatory for new teachers', false);
+
     setSaving(true);
-    const profilePhotoUrl = photo ? URL.createObjectURL(photo) : (editing?.profilePhotoUrl || '');
-    const r = await call(token, editing ? 'PUT' : 'POST', editing ? `/teachers/${editing._id}` : '/teachers', { ...form, profilePhotoUrl });
+    let s3Url = editing?.profilePhotoUrl || '';
+    
+    if (photo) {
+        const photoData = new FormData();
+        photoData.append('file', photo);
+        const uploadRes = await fetch(`${BASE}/upload`, {
+            method: 'POST',
+            body: photoData
+        });
+        const uploadJson = await uploadRes.json();
+        if (uploadJson.success) {
+            s3Url = uploadJson.url;
+        } else {
+            setSaving(false);
+            return show('Image upload failed', false);
+        }
+    }
+
+    const payload = { ...form, profilePhotoUrl: s3Url };
+    const r = await call(token, editing ? 'PUT' : 'POST', editing ? `/teachers/${editing._id}` : '/teachers', payload);
     setSaving(false);
     if (r.success) { show(editing ? 'Teacher updated!' : 'Teacher added!'); setModal(false); reload(); }
     else show(r.message || 'Failed', false);
@@ -4014,6 +4049,9 @@ export function UserCreationPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!photo) {
+      return show(`Profile Photo is MANDATORY to register a ${formData.role}. Please upload an image.`, false);
+    }
     setLoading(true);
 
     const payload = new FormData();
@@ -4124,8 +4162,8 @@ export function UserCreationPage() {
               {renderInput('address', 'Address', 'text', true)}
 
               <div className="md:col-span-2 mb-5">
-                <label className="block font-semibold mb-2 text-sm text-slate-700">Profile Photo</label>
-                <input type="file" onChange={(e) => setPhoto(e.target.files[0])} accept="image/*" className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-bold file:bg-sky-50 file:text-sky-600 hover:file:bg-sky-100 transition-colors cursor-pointer" />
+                <label className="block font-semibold mb-2 text-sm text-slate-700">Profile Photo <span className="text-red-500">*</span></label>
+                <input type="file" required onChange={(e) => setPhoto(e.target.files[0])} accept="image/*" className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-bold file:bg-sky-50 file:text-sky-600 hover:file:bg-sky-100 transition-colors cursor-pointer" />
               </div>
             </div>
           </div>
@@ -4205,7 +4243,7 @@ export function UserCreationPage() {
           </div>
 
           <div className="pt-6 border-t border-slate-100 flex justify-end">
-            <button type="submit" disabled={loading || !isFormValid} className={`inline-flex items-center justify-center w-full md:w-auto px-8 py-4 font-bold text-base rounded-xl transition-all duration-300 ease-in-out bg-sky-500 text-white shadow-md hover:bg-sky-600 hover:-translate-y-1 hover:shadow-lg hover:shadow-sky-200/50 ${(!isFormValid || loading) ? 'opacity-50 cursor-not-allowed transform-none hover:translate-y-0 hover:shadow-none' : ''}`}>
+            <button type="submit" disabled={loading} className={`inline-flex items-center justify-center w-full md:w-auto px-8 py-4 font-bold text-base rounded-xl transition-all duration-300 ease-in-out bg-sky-500 text-white shadow-md hover:bg-sky-600 hover:-translate-y-1 hover:shadow-lg hover:shadow-sky-200/50 ${loading ? 'opacity-50 cursor-not-allowed transform-none hover:translate-y-0 hover:shadow-none' : ''}`}>
               {loading ? 'Creating Account...' : `✓ Create ${formData.role} Account`}
             </button>
           </div>

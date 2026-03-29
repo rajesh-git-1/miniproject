@@ -71,7 +71,7 @@ function StatCard({ label, value, delta, color, icon, index }) {
 }
 
 // ─── DASHBOARD CONTENT ────────────────────────────────────────────────────────
-function DashboardContent({ activeModule, userName, stats, activities }) {
+function DashboardContent({ activeModule, userName, stats, activities, userPhoto }) {
   if (activeModule !== "dashboard") {
     return (
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: 400, gap: 16 }}>
@@ -102,7 +102,9 @@ function DashboardContent({ activeModule, userName, stats, activities }) {
             {new Date().toLocaleDateString("en-IN", { weekday: "long", year: "numeric", month: "long", day: "numeric" })} · <span style={{ color: TEACHER_CONFIG.color }}>{TEACHER_CONFIG.label} Dashboard</span>
           </div>
         </div>
-        <div style={{ fontSize: 48, opacity: 0.6 }}>{TEACHER_CONFIG.icon}</div>
+        <div style={{ fontSize: 48, opacity: 0.6 }}>
+          {userPhoto ? <img src={userPhoto} alt="Profile" style={{ width: 60, height: 60, borderRadius: '50%', objectFit: 'cover', border: `2px solid ${TEACHER_CONFIG.color}` }} /> : TEACHER_CONFIG.icon}
+        </div>
       </div>
 
       {/* Stat Cards */}
@@ -151,6 +153,7 @@ function DashboardContent({ activeModule, userName, stats, activities }) {
 export default function TeacherDashboard() {
   const navigate = useNavigate();
   const [userName, setUserName] = useState("");
+  const [userPhoto, setUserPhoto] = useState("");
   const [activeModule, setActiveModule] = useState("dashboard");
   const [collapsed, setCollapsed] = useState(false);
   const [stats, setStats] = useState(null);
@@ -171,6 +174,7 @@ export default function TeacherDashboard() {
       return;
     }
     setUserName(user.name);
+    if (user.profilePhotoUrl) setUserPhoto(user.profilePhotoUrl);
 
     // Fetch Teacher API Data
     const loadData = async () => {
@@ -241,7 +245,7 @@ export default function TeacherDashboard() {
           </header>
 
           <main style={{ flex: 1, padding: "24px", overflowY: "auto" }}>
-            <DashboardContent activeModule={activeModule} userName={userName} stats={stats} activities={activities} />
+            <DashboardContent activeModule={activeModule} userName={userName} stats={stats} activities={activities} userPhoto={userPhoto} />
           </main>
 
         </div>

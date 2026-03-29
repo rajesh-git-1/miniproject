@@ -43,6 +43,7 @@ const StudentSchema = new Schema({
   house: { type: String, enum: ['Red House', 'Blue House', 'Green House', 'Yellow House'], default: 'Red House' },
   admissionDate: { type: Date, default: Date.now },
   bloodGroup: { type: String },
+  profilePhotoUrl: { type: String },
   isActive: { type: Boolean, default: true },
 }, { timestamps: true });
 
@@ -61,6 +62,7 @@ const TeacherSchema = new Schema({
   experience: { type: Number, default: 0 }, // years
   joinDate: { type: Date, default: Date.now },
   salary: { type: Number, default: 0 },
+  profilePhotoUrl: { type: String },
   isActive: { type: Boolean, default: true },
 }, { timestamps: true });
 

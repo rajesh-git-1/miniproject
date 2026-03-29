@@ -8,6 +8,7 @@ const RegisterPage = () => {
     // Using global school_id or falling back to param
     const school_id = useSelector(selectCurrentSchoolId) || schoolCode;
 
+    const [profilePhoto, setProfilePhoto] = useState(null);
     const [formData, setFormData] = useState({
         role: 'Student', // Default
         name: '', email: '', password: '', profilePhotoUrl: '',
@@ -55,7 +56,9 @@ const RegisterPage = () => {
     const isFormValid = (() => {
         if (Object.keys(errors).length > 0) return false;
         if (!formData.name || !formData.email || !formData.password || !formData.role) return false;
-
+        
+        // We will validate photo in handleSubmit to show explicit error
+        
         if (formData.role === 'Student') {
             if (!formData.rollNo || !formData.fatherName || !formData.motherName || !formData.dob || !formData.gender || !formData.className || !formData.section || !formData.admissionDate || !formData.mobile || !formData.address) return false;
         } else if (formData.role === 'Teacher') {
@@ -71,12 +74,20 @@ const RegisterPage = () => {
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            setFormData({ ...formData, profilePhotoUrl: `https://fakeupload.com/photos/${file.name}` });
+            setProfilePhoto(file);
         }
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        
+        // Strict mandatory check for profile photo with visual error feedback
+        if ((formData.role === 'Student' || formData.role === 'Teacher') && !profilePhoto) {
+            setErrorMsg(`Profile Photo is MANDATORY to register as a ${formData.role}. Please upload an image.`);
+            window.scrollTo(0, 0);
+            return;
+        }
+
         setLoading(true);
         setErrorMsg('');
         setSuccessMsg('');
@@ -117,6 +128,26 @@ const RegisterPage = () => {
         }
 
         try {
+            let uploadedPhotoUrl = '';
+            // Upload photo to S3 first if exists
+            if (profilePhoto) {
+                const photoData = new FormData();
+                photoData.append('file', profilePhoto);
+                const uploadRes = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: photoData
+                });
+                const uploadJson = await uploadRes.json();
+                if (uploadJson.success) {
+                    uploadedPhotoUrl = uploadJson.url;
+                } else {
+                    throw new Error('Image upload failed');
+                }
+            }
+
+            // Assign uploaded URL
+            payload.profilePhotoUrl = uploadedPhotoUrl;
+
             const response = await fetch('/api/public/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -285,8 +316,11 @@ const RegisterPage = () => {
                             {renderInput('password', 'Password', 'password', true)}
 
                             <div className="md:col-span-2 form-group">
-                                <label className="block font-semibold mb-2 text-sm text-slate-700" htmlFor="profilePhoto">Profile Photo</label>
+                                <label className="block font-semibold mb-2 text-sm text-slate-700" htmlFor="profilePhoto">
+                                    Profile Photo {(formData.role === 'Student' || formData.role === 'Teacher') && <span className="text-red-500">*</span>}
+                                </label>
                                 <input type="file" name="profilePhoto" onChange={handleFileChange} accept="image/*"
+                                    required={formData.role === 'Student' || formData.role === 'Teacher'}
                                     className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-bold file:bg-sky-50 file:text-sky-600 hover:file:bg-sky-100 transition-colors cursor-pointer" />
                             </div>
                         </div>
@@ -301,7 +335,7 @@ const RegisterPage = () => {
                     </div>
 
                     <div className="pt-8 mt-4">
-                        <button type="submit" disabled={loading || !isFormValid} className={`w-full inline-flex items-center justify-center px-6 py-4 font-bold text-base rounded-xl transition-all duration-300 ease-in-out bg-sky-500 text-white shadow-md hover:bg-sky-600 hover:-translate-y-1 hover:shadow-xl hover:shadow-sky-200/60 ${loading || !isFormValid ? 'opacity-50 cursor-not-allowed transform-none hover:translate-y-0 hover:shadow-md' : ''}`}>
+                        <button type="submit" disabled={loading} className={`w-full inline-flex items-center justify-center px-6 py-4 font-bold text-base rounded-xl transition-all duration-300 ease-in-out bg-sky-500 text-white shadow-md hover:bg-sky-600 hover:-translate-y-1 hover:shadow-xl hover:shadow-sky-200/60 ${loading ? 'opacity-50 cursor-not-allowed transform-none hover:translate-y-0 hover:shadow-md' : ''}`}>
                             {loading ? 'Submitting...' : `Register as ${formData.role}`}
                         </button>
                     </div>

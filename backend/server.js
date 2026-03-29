@@ -8,14 +8,7 @@ import multer from 'multer';
 import fs from 'fs';
 import path from 'path';
 
-const uploadDir = 'uploads/';
-if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, 'uploads/'),
-  filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname))
-});
-const upload = multer({ storage: storage });
+import { upload, uploadToS3 } from './utils/s3Upload.js';
 
 const generateSequentialId = async (Model, prefix, fieldName) => {
   const lastDoc = await Model.findOne({}, { [fieldName]: 1 }).sort({ _id: -1 });
@@ -66,6 +59,28 @@ mongoose.connection.on('error', err => {
 
 app.get('/', (req, res) => {
   res.send('Abhyaas ERP Backend API is running!');
+});
+
+app.get('/api/debug/purna', async (req, res) => {
+  try {
+    const student = await mongoose.models.Student.findOne({ name: /purna/i }).lean();
+    const reg = await mongoose.models.Registration.findOne({ name: /purna/i }).lean();
+    res.json({ student, reg });
+  } catch (err) {
+    res.status(500).json(err);
+  }
+});
+
+// 🟢 GLOBAL S3 UPLOAD ROUTE
+app.post('/api/upload', upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ success: false, message: 'No file uploaded' });
+    const fileUrl = await uploadToS3(req.file.buffer, req.file.originalname, req.file.mimetype);
+    res.json({ success: true, url: fileUrl });
+  } catch (err) {
+    console.error('Upload Error:', err);
+    res.status(500).json({ success: false, message: 'File upload failed' });
+  }
 });
 
 // 🟢 INTERNAL HELPERS for Attendance Marking screen
@@ -301,6 +316,11 @@ app.post('/api/admin/users/create', upload.single('profilePhoto'), async (req, r
         }
       }
 
+      let s3PhotoUrl = '';
+      if (req.file) {
+        s3PhotoUrl = await uploadToS3(req.file.buffer, req.file.originalname, req.file.mimetype);
+      }
+
       profile = await Student.create({
         name, email: email.toLowerCase(), phone: mobile || '', address: address || '',
         gender: gender || 'Male', bloodGroup: bloodGroup || '', parentName: parentName || '',
@@ -310,7 +330,7 @@ app.post('/api/admin/users/create', upload.single('profilePhoto'), async (req, r
         standard,
         section,
         rollNo, feeStatus: 'Pending',
-        profilePhotoUrl: req.file ? `http://localhost:5000/uploads/${req.file.filename}` : '',
+        profilePhotoUrl: req.body.profilePhotoUrl || s3PhotoUrl,
         isActive: true,
       });
 
@@ -319,13 +339,17 @@ app.post('/api/admin/users/create', upload.single('profilePhoto'), async (req, r
       }
 
     } else if (role === 'Teacher') {
+      let s3PhotoUrl = '';
+      if (req.file) {
+        s3PhotoUrl = await uploadToS3(req.file.buffer, req.file.originalname, req.file.mimetype);
+      }
       const autoTeacherId = teacherId || await generateSequentialId(Teacher, 'T', 'teacherId');
       profile = await Teacher.create({
         name, email: email.toLowerCase(), phone: mobile || '', teacherId: autoTeacherId,
         designation: designation || '', department: department || '', qualification: qualification || '',
         experience: experience ? Number(experience) : 0, salary: salary ? Number(salary) : 0,
         subjects: subjects || [],
-        profilePhotoUrl: req.file ? `http://localhost:5000/uploads/${req.file.filename}` : '',
+        profilePhotoUrl: req.body.profilePhotoUrl || s3PhotoUrl,
         isActive: true,
       });
     } else {

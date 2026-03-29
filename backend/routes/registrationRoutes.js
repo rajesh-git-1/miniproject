@@ -10,14 +10,7 @@ import Teacher from '../models/Teacher.js';
 
 const router = express.Router();
 
-const uploadDir = 'uploads/';
-if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
-
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, 'uploads/'),
-    filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname))
-});
-const upload = multer({ storage: storage });
+import { upload, uploadToS3 } from '../utils/s3Upload.js';
 
 router.get('/', async (req, res) => {
     try {
@@ -46,7 +39,9 @@ router.post('/', upload.single('profilePhoto'), async (req, res) => {
             return res.status(400).json({ success: false, message: 'Phone number must be exactly 10 digits' });
         }
 
-        if (req.file) regData.profilePhotoUrl = `http://localhost:5000/uploads/${req.file.filename}`;
+        if (req.file) {
+            regData.profilePhotoUrl = await uploadToS3(req.file.buffer, req.file.originalname, req.file.mimetype);
+        }
 
         const newReg = new Registration(regData);
         await newReg.save();
